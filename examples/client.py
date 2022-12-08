@@ -1,6 +1,6 @@
 import wharf
 
-client = wharf.Client(token="SomeToken", intents=wharf.Intents.all())
+client = wharf.Client(token="SomeToken", intents=wharf.Intents.ALL)
 
 
 @client.listen("ready")
