@@ -1,11 +1,14 @@
 import discord_typings as dt
 
-from ...client import Client
+from typing import TYPE_CHECKING
+
 from .user import User
 
+if TYPE_CHECKING:
+    from ...client import Client
 
 class Message:
-    def __init__(self, data: dt.MessageCreateData, bot: Client):
+    def __init__(self, data: dt.MessageCreateData, bot: "Client"):
         self._from_data(data)
         self.bot = bot
 
