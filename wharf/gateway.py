@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Any, Optional, Union
 from aiohttp import ClientSession, ClientWebSocketResponse, WSMsgType
 
 from .dispatcher import Dispatcher
-from .errors import WebsocketClosed
+from .errors import WebsocketClosed, GatewayReconnect
 from .impl import Guild
 
 
@@ -58,18 +58,19 @@ class Gateway:
         self.session: Optional[ClientSession] = None
         self.ws: Optional[ClientWebSocketResponse] = None
 
-    def _decompress_msg(self, msg: Union[str, bytes]):
+    def _decompress_msg(self, msg: bytes):
         ZLIB_SUFFIX = b"\x00\x00\xff\xff"
+
+        out_str: str = ""
 
         # Message should be compressed
         if len(msg) < 4 or msg[-4:] != ZLIB_SUFFIX:
-            out_str: str = ""
-
             return out_str
 
         buff = self._decompresser.decompress(msg)
-        return buff.decode("utf-8")
-
+        out_str = buff.decode("utf-8")
+        return out_str
+    
     @property
     def identify_payload(self):
         return {
@@ -126,11 +127,16 @@ class Gateway:
 
         await self.ws.send_json(payload)
 
-    async def connect(self, *, reconnect: bool = False):
+    async def connect(self, *, url: str = None, reconnect: bool = False):
         if not self.session:
             self.session = ClientSession()
 
+        if not url:
+            url = self.gw_url
+
         self.ws = await self.session.ws_connect(self.gw_url)
+
+        self.resume = reconnect
 
         while True:
 
@@ -166,6 +172,7 @@ class Gateway:
 
                 if data["t"] == "READY":
                     self.session_id = data["d"]["session_id"]
+                    self._resume_url = data["d"]["resume_gateway_url"]
 
                 event_data = data["d"]
 
@@ -180,15 +187,28 @@ class Gateway:
             if data["op"] == OPCodes.reconnect:
                 _log.info("reconnected!!")
                 await self.ws.close(code=4001)
-                await self.connect(reconnect=True)
+                await self.connect(url=self._resume_url, reconnect=True)
 
             if data["op"] == OPCodes.invalid_session:
                 await self.ws.close(code=4001)
-                _log.info("invalid?")
                 break
 
             elif msg.type == WSMsgType.CLOSE:
                 raise WebsocketClosed(msg.data, msg.extra)
+
+    async def close(self, *, code: int = 1000, resume: bool = True):
+        if not self.ws: 
+            return
+
+        if not self.is_closed:
+            # Close the websocket connection
+            await self.ws.close(code=code)
+
+            # if we need to reconnect, set the event
+            if resume:
+                raise GatewayReconnect(self._resume_url, self.resume)
+
+            
 
     @property
     def is_closed(self):

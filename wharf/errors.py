@@ -34,7 +34,7 @@ def _shorten_error_dict(
     return ret_items
 
 
-class HTTPException(Exception):
+class HTTPException(BaseException):
     """Represents an error while attempting to connect to the Discord REST API.
     Args:
         response (aiohttp.ClientResponse): The response from the attempted REST API request.
@@ -83,3 +83,13 @@ class BucketMigrated(BaseException):
         super().__init__(
             f"The current bucket was migrated to another bucket at {discord_hash}"
         )
+
+class GatewayReconnect(BaseException):
+
+    __slots__ = ("url", "resume")
+
+    def __init__(self, url: str, resume: bool):
+        self.url = url
+        self.resume = resume
+
+        super().__init__(f"The Gateway should be reconnected to with url {self.url}.")
