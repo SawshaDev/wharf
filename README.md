@@ -2,7 +2,7 @@
 
 An minimal discord api wrapper that allows **you** to do what you want to do
 <br>
-Support Server: https://discord.gg/whPvt4TtMt
+Support Server: https://discord.gg/gJdY2AQxJY
 
 ## WARNING
 
