@@ -240,10 +240,14 @@ class HTTPClient:
 
         return await self.request(Route("GET", f"/applications/{me['id']}/commands"))
 
-    def interaction_respond(self, content: str, embed: Embed, *, id: int, token: str):
+    def interaction_respond(self, content: str, embed: Embed = None, *, id: int, token: str):
+        embeds = []
+        if embed:
+            embeds.append(embed)
+
         return self.request(
             Route("POST", f"/interactions/{id}/{token}/callback"),
-            json_params={"type": 4, "data": {"content": content, "embeds": [embed]}},
+            json_params={"type": 4, "data": {"content": content, "embeds": embeds}},
         )
 
     def send_message(
@@ -253,6 +257,17 @@ class HTTPClient:
             Route("POST", f"/channels/{channel}/messages"),
             json_params={"content": content, "embeds": [embed.to_dict()]},
             files=files,
+        )
+
+    def create_role(self, guild_id: int, *, name: str, color: int = 0, hoist: bool = False, reason: str = None):
+        return self.request(
+            Route("POST", f"/guilds/{guild_id}/roles"),
+            json_params={
+                "name": name,
+                "color": color,
+                "hoist": hoist,
+            },
+            reason=reason
         )
 
     def get_guild(self, guild_id: int):

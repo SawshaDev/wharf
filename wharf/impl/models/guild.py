@@ -4,14 +4,17 @@ import discord_typings as dt
 
 from .member import Member
 
+from .role import Role
+
 if TYPE_CHECKING:
     from ...client import Client
+
 
 
 class Guild:
     def __init__(self, data: dt.GuildData, bot: "Client"):
         self._from_data(data)
-        self.__bot = bot
+        self.bot = bot
 
     def _from_data(self, guild: dt.GuildData):
         self.name = guild.get("name")
@@ -19,7 +22,7 @@ class Guild:
         self.icon_hash = guild.get("icon")
 
     async def fetch_member(self, user: int):
-        return Member(await self.__bot.http.get_member(user, self.id))
+        return Member(await self.bot.http.get_member(user, self.id))
 
     async def ban(
         self,
@@ -27,4 +30,8 @@ class Guild:
         *,
         reason: str,
     ):
-        await self.__bot.http.ban(self.id, user_id, reason)
+        await self.bot.http.ban(self.id, user_id, reason)
+
+    async def create_role(self, name: str, *, reason: str = None) -> Role:
+        payload = await self.bot.http.create_role(self.id, name=name, reason=reason)
+        return Role(payload, self.bot)

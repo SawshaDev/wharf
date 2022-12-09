@@ -24,10 +24,18 @@ class InteractionOption:
         self._from_data(payload)
 
     def _from_data(self, payload: dict):
-        self.name = payload.get("name")
+        self._name = payload.get("name")
         self._type = payload.get("type")
-        self.value = payload.get("value")
+        self._value = payload.get("value")
 
+    @property
+    def value(self) -> str:
+        return self._value
+
+    @property
+    def name(self) -> str:
+        return self._name
+ 
     def __str__(self):
         return self.value
 
@@ -41,6 +49,7 @@ class Interaction:
         self.channel_id = payload.get("channel_id")
         self.command = InteractionCommand._from_json(payload)
         self.options: List[InteractionOption] = []
+        self.guild_id = payload.get("guild_id")
 
         self._make_options()
 
@@ -52,10 +61,10 @@ class Interaction:
         await self.bot.http.interaction_respond(content, id=self.id, token=self.token)
 
     def _make_options(self):
-        for option in self.payload["data"]["options"]:
-            option = InteractionOption(option)
-            self.options.append(option)
-
+        if self.payload["data"]["options"]:
+            for option in self.payload["data"]["options"]:
+                option = InteractionOption(option)
+                self.options.append(option)
 
 class InteractionCommand:
     def __init__(self, *, name: str, description: Optional[str] = None):

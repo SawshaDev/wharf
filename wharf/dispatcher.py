@@ -29,7 +29,7 @@ class Dispatcher:
             if event_type == "message_update" and len(event_data) == 4:
                 return
 
-            return Message(event_data)
+            return Message(event_data, self.bot)
 
         elif event_type == "interaction_create":
             return Interaction(self.bot, event_data)

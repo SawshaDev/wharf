@@ -14,9 +14,12 @@ from aiohttp import ClientSession, ClientWebSocketResponse, WSMsgType
 
 from .dispatcher import Dispatcher
 from .errors import WebsocketClosed
+from .impl import Guild
+
 
 if TYPE_CHECKING:
     from .http import HTTPClient
+
 
 
 logging.basicConfig(level=logging.INFO)
