@@ -11,7 +11,6 @@ from .enums import Statuses
 from typing import List
 
 
-
 class Client:
     def __init__(self, *, token: str, intents: Intents):
         self.intents = intents
@@ -42,11 +41,9 @@ class Client:
 
         return Guild(await self.http.get_guild(guild_id), self)
 
-
     async def register_app_command(self, command: InteractionCommand):
         await self.http.register_app_commands(command)
         self._slash_commands.append(command._to_json())
-
 
     async def start(self):
         await self.http.start()
@@ -59,19 +56,14 @@ class Client:
 
         for command in api_commands:
             for cached_command in self._slash_commands:
-                if command['name'] != cached_command['name']:
+                if command["name"] != cached_command["name"]:
                     await self.http.delete_app_command(command)
                     continue
                 else:
                     continue
-            
-        
-
-
 
     def run(self):
         try:
             asyncio.run(self.start())
         except (KeyboardInterrupt, RuntimeError):
             asyncio.run(self.close())
-            

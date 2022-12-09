@@ -240,7 +240,9 @@ class HTTPClient:
 
         return await self.request(Route("GET", f"/applications/{me['id']}/commands"))
 
-    def interaction_respond(self, content: str, embed: Embed = None, *, id: int, token: str):
+    def interaction_respond(
+        self, content: str, embed: Embed = None, *, id: int, token: str
+    ):
         embeds = []
         if embed:
             embeds.append(embed)
@@ -259,7 +261,15 @@ class HTTPClient:
             files=files,
         )
 
-    def create_role(self, guild_id: int, *, name: str, color: int = 0, hoist: bool = False, reason: str = None):
+    def create_role(
+        self,
+        guild_id: int,
+        *,
+        name: str,
+        color: int = 0,
+        hoist: bool = False,
+        reason: str = None,
+    ):
         return self.request(
             Route("POST", f"/guilds/{guild_id}/roles"),
             json_params={
@@ -267,7 +277,7 @@ class HTTPClient:
                 "color": color,
                 "hoist": hoist,
             },
-            reason=reason
+            reason=reason,
         )
 
     def get_guild(self, guild_id: int):

@@ -10,7 +10,6 @@ if TYPE_CHECKING:
     from ...client import Client
 
 
-
 class Guild:
     def __init__(self, data: dt.GuildData, bot: "Client"):
         self._from_data(data)

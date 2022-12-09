@@ -84,6 +84,7 @@ class BucketMigrated(BaseException):
             f"The current bucket was migrated to another bucket at {discord_hash}"
         )
 
+
 class GatewayReconnect(BaseException):
 
     __slots__ = ("url", "resume")

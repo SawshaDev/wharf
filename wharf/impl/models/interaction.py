@@ -35,7 +35,7 @@ class InteractionOption:
     @property
     def name(self) -> str:
         return self._name
- 
+
     def __str__(self):
         return self.value
 
@@ -65,6 +65,7 @@ class Interaction:
             for option in self.payload["data"]["options"]:
                 option = InteractionOption(option)
                 self.options.append(option)
+
 
 class InteractionCommand:
     def __init__(self, *, name: str, description: Optional[str] = None):

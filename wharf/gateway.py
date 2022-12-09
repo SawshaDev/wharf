@@ -21,7 +21,6 @@ if TYPE_CHECKING:
     from .http import HTTPClient
 
 
-
 logging.basicConfig(level=logging.INFO)
 _log = logging.getLogger(__name__)
 
@@ -70,7 +69,7 @@ class Gateway:
         buff = self._decompresser.decompress(msg)
         out_str = buff.decode("utf-8")
         return out_str
-    
+
     @property
     def identify_payload(self):
         return {
@@ -197,7 +196,7 @@ class Gateway:
                 raise WebsocketClosed(msg.data, msg.extra)
 
     async def close(self, *, code: int = 1000, resume: bool = True):
-        if not self.ws: 
+        if not self.ws:
             return
 
         if not self.is_closed:
@@ -207,8 +206,6 @@ class Gateway:
             # if we need to reconnect, set the event
             if resume:
                 raise GatewayReconnect(self._resume_url, self.resume)
-
-            
 
     @property
     def is_closed(self):
