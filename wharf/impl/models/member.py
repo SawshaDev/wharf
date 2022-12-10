@@ -1,14 +1,17 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 import discord_typings as dt
 
 from ...asset import Asset
 
+if TYPE_CHECKING:
+    from ..cache import Cache
 
 class Member:
-    def __init__(self, payload: dt.GuildMemberData):
+    def __init__(self, payload: dt.GuildMemberData, cache: "Cache"):
+        self.cache = cache
         self._from_data(payload)
 
     def _from_data(self, payload: dt.GuildMemberData):

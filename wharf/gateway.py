@@ -176,7 +176,7 @@ class Gateway:
                     self._resume_url = data["d"]["resume_gateway_url"]
 
                 if data["t"] == "GUILD_CREATE":
-                    self.cache.add_guild(data["d"])
+                    await self.cache.handle_guild_caching(data['d'])
 
                 event_data = data["d"]
 
