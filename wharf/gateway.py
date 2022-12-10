@@ -19,6 +19,7 @@ from .impl import Guild
 
 if TYPE_CHECKING:
     from .http import HTTPClient
+    from .impl.cache import Cache
 
 
 logging.basicConfig(level=logging.INFO)
@@ -43,7 +44,8 @@ class Gateway:
     if TYPE_CHECKING:
         heartbeat_interval: int
 
-    def __init__(self, dispatcher: Dispatcher, http: HTTPClient):
+    def __init__(self, dispatcher: Dispatcher, cache: Cache, http: HTTPClient):
+        self.cache = cache
         self.http = http
         self.token = self.http._token
         self.intents = self.http._intents
@@ -173,6 +175,9 @@ class Gateway:
                     self.session_id = data["d"]["session_id"]
                     self._resume_url = data["d"]["resume_gateway_url"]
 
+                if data["t"] == "GUILD_CREATE":
+                    self.cache.add_guild(data["d"])
+
                 event_data = data["d"]
 
                 if data["t"].lower() not in self.dispatcher.events.keys():
@@ -185,7 +190,7 @@ class Gateway:
 
             if data["op"] == OPCodes.reconnect:
                 _log.info("reconnected!!")
-                await self.ws.close(code=4001)
+                await self.close(resume=True)
                 await self.connect(url=self._resume_url, reconnect=True)
 
             if data["op"] == OPCodes.invalid_session:
@@ -200,10 +205,10 @@ class Gateway:
             return
 
         if not self.is_closed:
-            # Close the websocket connection
+            # Close the websocket connection 
             await self.ws.close(code=code)
 
-            # if we need to reconnect, set the event
+            # if we need to reconnect, set the event #wahh
             if resume:
                 raise GatewayReconnect(self._resume_url, self.resume)
 

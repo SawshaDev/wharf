@@ -51,6 +51,7 @@ class Interaction:
         self.options: List[InteractionOption] = []
         self.guild_id = payload.get("guild_id")
 
+        print(self.payload)
         self._make_options()
 
     async def reply(self, content: str, embed: Embed = None):
@@ -61,8 +62,8 @@ class Interaction:
         await self.bot.http.interaction_respond(content, id=self.id, token=self.token)
 
     def _make_options(self):
-        if self.payload["data"]["options"]:
-            for option in self.payload["data"]["options"]:
+        if self.payload["data"].get("options"):
+            for option in self.payload["data"].get("options"):
                 option = InteractionOption(option)
                 self.options.append(option)
 

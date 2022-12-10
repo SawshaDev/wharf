@@ -7,13 +7,13 @@ from .member import Member
 from .role import Role
 
 if TYPE_CHECKING:
-    from ...client import Client
+    from ..cache import Cache
 
 
 class Guild:
-    def __init__(self, data: dt.GuildData, bot: "Client"):
+    def __init__(self, data: dt.GuildData, cache: "Cache"):
         self._from_data(data)
-        self.bot = bot
+        self.cache = cache
 
     def _from_data(self, guild: dt.GuildData):
         self.name = guild.get("name")
@@ -21,7 +21,7 @@ class Guild:
         self.icon_hash = guild.get("icon")
 
     async def fetch_member(self, user: int):
-        return Member(await self.bot.http.get_member(user, self.id))
+        return Member(await self.cache.http.get_member(user, self.id))
 
     async def ban(
         self,
@@ -29,8 +29,8 @@ class Guild:
         *,
         reason: str,
     ):
-        await self.bot.http.ban(self.id, user_id, reason)
+        await self.cache.http.ban(self.id, user_id, reason)
 
     async def create_role(self, name: str, *, reason: str = None) -> Role:
-        payload = await self.bot.http.create_role(self.id, name=name, reason=reason)
-        return Role(payload, self.bot)
+        payload = await self.cache.http.create_role(self.id, name=name, reason=reason)
+        return Role(payload, self.cache)

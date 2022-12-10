@@ -6,7 +6,8 @@ from .impl import Guild, Embed, Channel, InteractionCommand
 from .dispatcher import Dispatcher
 from .file import File
 from .enums import Statuses
-
+from .impl.cache import Cache
+from .gateway import Gateway
 
 from typing import List
 
@@ -14,13 +15,14 @@ from typing import List
 class Client:
     def __init__(self, *, token: str, intents: Intents):
         self.intents = intents
-
+        self.token = token
+        self._slash_commands = []
         self.dispatcher = Dispatcher(self)
         self.http = HTTPClient(
-            dispatcher=self.dispatcher, token=token, intents=intents.value
+            token=self.token, intents=self.intents.value
         )
-        self.ws = self.http._gateway
-        self._slash_commands = []
+        self.cache = Cache(self.http)
+        self.ws = Gateway(self.dispatcher, self.cache, self.http)
 
     def listen(self, name: str):
         def inner(func):
@@ -46,7 +48,7 @@ class Client:
         self._slash_commands.append(command._to_json())
 
     async def start(self):
-        await self.http.start()
+        await self.ws.connect()
 
     async def close(self):
         await self.http._session.close()

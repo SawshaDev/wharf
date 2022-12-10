@@ -15,6 +15,7 @@ from .file import File
 from .gateway import Gateway
 from .impl import Embed, InteractionCommand
 from .impl.ratelimit import Ratelimiter
+from .impl.cache import Cache
 
 _log = logging.getLogger(__name__)
 
@@ -69,11 +70,10 @@ class Route:
 
 
 class HTTPClient:
-    def __init__(self, *, dispatcher: Dispatcher, token: str, intents: int):
+    def __init__(self, *, token: str, intents: int):
         self._intents = intents
         self._token = token
         self.__session: aiohttp.ClientSession = None  # type: ignore
-        self._gateway = Gateway(dispatcher, self)
         self.base_headers = {"Authorization": f"Bot {self._token}"}
         self.user_agent = "DiscordBot (https://github.com/sawshadev/wharf, {0}) Python/{1.major}.{1.minor}.{1.micro}".format(
             __version__, sys.version_info
