@@ -27,6 +27,8 @@ class Member:
         self.name = payload["user"]["username"]
         self._avatar = payload["user"].get("avatar")
 
+
+
     @property
     def avatar(self) -> Optional[Asset]:
         if self._avatar is not None:

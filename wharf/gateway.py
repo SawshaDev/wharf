@@ -152,8 +152,6 @@ class Gateway:
 
             self._last_sequence = data["s"]
 
-            _log.info(data["op"])
-
             if data["op"] == OPCodes.hello:
                 self.heartbeat_interval = data["d"]["heartbeat_interval"]
 
@@ -167,16 +165,20 @@ class Gateway:
             if data["op"] == OPCodes.heartbeat:
                 await self.send(self.ping_payload)
 
+            _log.info(data["t"])
+
             if data["op"] == OPCodes.dispatch:
+                event_data = data["d"]
 
                 if data["t"] == "READY":
-                    self.session_id = data["d"]["session_id"]
-                    self._resume_url = data["d"]["resume_gateway_url"]
+                    self.session_id = event_data["session_id"]
+                    self._resume_url = event_data["resume_gateway_url"]
 
                 if data["t"] == "GUILD_CREATE":
-                    await self.cache.handle_guild_caching(data["d"])
+                    await self.cache.handle_guild_caching(event_data)
 
-                event_data = data["d"]
+                if data["t"] == "GUILD_MEMBER_ADD":
+                    _log.info(event_data)
 
                 if data["t"].lower() not in self.dispatcher.events.keys():
                     continue
@@ -189,7 +191,6 @@ class Gateway:
             if data["op"] == OPCodes.reconnect:
                 _log.info("reconnected!!")
                 await self.close(resume=True)
-                await self.connect(url=self._resume_url, reconnect=True)
 
             if data["op"] == OPCodes.invalid_session:
                 await self.ws.close(code=4001)
@@ -203,8 +204,10 @@ class Gateway:
             return
 
         if not self.is_closed:
-            # Close the websocket connection
             await self.ws.close(code=code)
+            
+            if resume:
+                await self.connect(url=self._resume_url, reconnect=True)
 
     @property
     def is_closed(self):

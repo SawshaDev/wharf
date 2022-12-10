@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import discord_typings as dt
 
-from ..impl import Channel, Guild, Member
+from ..impl import Channel, Guild, Member, User
 
 if TYPE_CHECKING:
     from ..http import HTTPClient
@@ -25,9 +25,23 @@ class Cache:
         self.guilds: Dict[dt.Snowflake, Guild] = {}
         self.members: Dict[dt.Snowflake, Dict[str, Member]] = {}
         self.channels: Dict[dt.Snowflake, Dict[str, Channel]] = {}
+        self.users: dict[dt.Snowflake, User] = {}
+
+    def get_user(self, user_id: dt.Snowflake):
+        return self.users.get(user_id)
+
+    def add_user(self, payload: dt.UserData):
+        user = self.users.get(payload["id"])
+
+        if user:
+            return user
+        
+        user = User(payload, self)
+        self.users[user.id] = user
+        return user
 
     def get_guild(self, guild_id: dt.Snowflake):
-        return self.guilds[guild_id]
+        return self.guilds.get(guild_id)
 
     def add_guild(self, payload: dt.GuildData):
         guild = self.guilds.get(payload["id"])
@@ -41,7 +55,7 @@ class Cache:
         return guild
 
     def get_channel(self, channel_id: int) -> Channel:
-        return self.channels[channel_id]
+        return self.channels.get(channel_id)
 
     def add_channel(self, guild_id: int, payload: dt.ChannelData):
         if guild_id not in self.channels:
@@ -59,7 +73,7 @@ class Cache:
         return channel
 
     def get_member(self, guild_id: str, member_id: str) -> Member:
-        return self.members[guild_id][member_id]
+        return self.members.get(guild_id).get(member_id)
 
     def add_member(self, guild_id: dt.Snowflake, payload: dt.GuildMemberData):
         """
@@ -89,6 +103,7 @@ class Cache:
             self.add_channel(guild_id, channel)
 
         for member in members:
+            self.add_user(member['user'])
             self.add_member(guild_id, member)
 
         return guild

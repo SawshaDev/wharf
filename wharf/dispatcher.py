@@ -5,7 +5,7 @@ import inspect
 import logging
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, Dict, List, TypeVar
 
-from .impl import Interaction, Message
+from .impl import Interaction, Message, Member
 
 if TYPE_CHECKING:
     from .impl.cache import Cache
@@ -33,6 +33,9 @@ class Dispatcher:
 
         elif event_type == "interaction_create":
             return Interaction(self.cache, event_data)
+
+        elif event_type in ("guild_member_add", "guild_member_remove"):
+            return Member(event_data, self.cache)
 
         elif event_type == "ready":
             return None

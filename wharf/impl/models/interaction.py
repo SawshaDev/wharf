@@ -50,8 +50,22 @@ class Interaction:
         self.command = InteractionCommand._from_json(payload)
         self.options: List[InteractionOption] = []
         self.guild_id = payload.get("guild_id")
+        self._member = payload.get("member")
+        
+        if self._member:
+            self._user = self._member.get("user")
+        else:
+            self._user = self.payload.get("user")
 
         self._make_options()
+
+    @property
+    def user(self):
+        return self.cache.get_user(self._user['id'])
+
+    @property
+    def member(self):
+        return self.cache.get_member(self.guild_id, self._member['id'])
 
     @property
     def guild(self):
