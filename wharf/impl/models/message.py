@@ -1,6 +1,6 @@
-import discord_typings as dt
-
 from typing import TYPE_CHECKING
+
+import discord_typings as dt
 
 from .user import User
 

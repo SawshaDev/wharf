@@ -57,7 +57,6 @@ class Interaction:
     def guild(self):
         return self.cache.get_guild(self.guild_id)
 
-
     async def reply(self, content: str, embed: Embed = None):
         """
         Replies to a discord interaction

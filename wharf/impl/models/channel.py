@@ -14,6 +14,6 @@ class Channel:
         self._from_data(payload)
 
     def _from_data(self, payload: dt.ChannelData):
-        self.name = payload['name']
+        self.name = payload["name"]
         self.id = payload.get("id")
         self.guild_id = payload.get("guild")

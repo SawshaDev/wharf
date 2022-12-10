@@ -1,34 +1,36 @@
 from __future__ import annotations
 
 from asyncio import gather
-
-from typing import TYPE_CHECKING, Any, List, Dict, Optional
+from logging import getLogger
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import discord_typings as dt
 
-from ..impl import Guild
-from ..impl import Member
-from ..impl import Channel
+from ..impl import Channel, Guild, Member
 
 if TYPE_CHECKING:
     from ..http import HTTPClient
 
+_log = getLogger(__name__)
+
+
 class Cache:
     """
     Handles all sorts of cache!
-    
+
     """
+
     def __init__(self, http: HTTPClient):
         self.http = http
         self.guilds: Dict[dt.Snowflake, Guild] = {}
         self.members: Dict[dt.Snowflake, Dict[str, Member]] = {}
-        self.channels: Dict[dt.Snowflake,  Dict[str, Channel]] = {}
+        self.channels: Dict[dt.Snowflake, Dict[str, Channel]] = {}
 
     def get_guild(self, guild_id: dt.Snowflake):
         return self.guilds[guild_id]
 
     def add_guild(self, payload: dt.GuildData):
-        guild = self.guilds.get(payload['id'])
+        guild = self.guilds.get(payload["id"])
         if guild:
             return guild
 
@@ -44,8 +46,8 @@ class Cache:
     def add_channel(self, guild_id: int, payload: dt.ChannelData):
         if guild_id not in self.channels:
             self.channels[guild_id] = {}
-        
-        channel = self.channels[guild_id].get(payload['id'])
+
+        channel = self.channels[guild_id].get(payload["id"])
 
         if channel:
             return channel
@@ -55,8 +57,6 @@ class Cache:
         self.channels[guild_id][channel.id] = channel
         guild._add_channel(channel)
         return channel
- 
-
 
     def get_member(self, guild_id: str, member_id: str) -> Member:
         return self.members[guild_id][member_id]
@@ -68,10 +68,10 @@ class Cache:
 
         if guild_id not in self.members:
             self.members[guild_id] = {}
-        
-        member = self.members[guild_id].get(payload['user']['id'])
-        
-        if member: 
+
+        member = self.members[guild_id].get(payload["user"]["id"])
+
+        if member:
             return member
 
         member = Member(payload, self)
@@ -90,14 +90,11 @@ class Cache:
 
         for member in members:
             self.add_member(guild_id, member)
-        
+
         return guild
 
-    async def populate_all_servers(self): 
-        for guild_id in self.guilds:
-            await self.populate_server(guild_id)
-
-
     async def handle_guild_caching(self, data: dt.GuildData):
+        _log.info("Adding guild %s to cache!", data["id"])
         self.add_guild(data)
-        await self.populate_all_servers()     
+        _log.info("Populating guild %s's cache", data["id"])
+        await self.populate_server(data["id"])

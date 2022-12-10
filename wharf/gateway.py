@@ -13,9 +13,8 @@ from typing import TYPE_CHECKING, Any, Optional, Union
 from aiohttp import ClientSession, ClientWebSocketResponse, WSMsgType
 
 from .dispatcher import Dispatcher
-from .errors import WebsocketClosed, GatewayReconnect
+from .errors import GatewayReconnect, WebsocketClosed
 from .impl import Guild
-
 
 if TYPE_CHECKING:
     from .http import HTTPClient
@@ -175,7 +174,7 @@ class Gateway:
                     self._resume_url = data["d"]["resume_gateway_url"]
 
                 if data["t"] == "GUILD_CREATE":
-                    await self.cache.handle_guild_caching(data['d'])
+                    await self.cache.handle_guild_caching(data["d"])
 
                 event_data = data["d"]
 
@@ -204,12 +203,8 @@ class Gateway:
             return
 
         if not self.is_closed:
-            # Close the websocket connection 
+            # Close the websocket connection
             await self.ws.close(code=code)
-
-            # if we need to reconnect, set the event #wahh
-            if resume:
-                raise GatewayReconnect(self._resume_url, self.resume)
 
     @property
     def is_closed(self):

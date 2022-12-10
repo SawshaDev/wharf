@@ -2,11 +2,9 @@ from typing import TYPE_CHECKING, Dict, List
 
 import discord_typings as dt
 
-from .member import Member
-
-from .role import Role
-
 from .channel import Channel
+from .member import Member
+from .role import Role
 
 if TYPE_CHECKING:
     from ..cache import Cache
@@ -18,7 +16,6 @@ class Guild:
         self.cache = cache
         self._members: Dict[int, Member] = {}
         self._channels: Dict[int, Channel] = {}
-
 
     def _from_data(self, guild: dt.GuildData):
         self.name = guild.get("name")
@@ -44,8 +41,8 @@ class Guild:
         return Role(payload, self.cache)
 
     def _add_member(self, member: Member):
-        """ 
-        This function is meant to be used internally with the websocket to add to cache. 
+        """
+        This function is meant to be used internally with the websocket to add to cache.
         i dont honestly recommend using this at any point.
         shouldn't even be necessary to use it lol
         """
@@ -53,8 +50,8 @@ class Guild:
         self._members[member.id] = member
 
     def _add_channel(self, channel: Channel):
-        """ 
-        This function is meant to be used internally with the websocket to add to cache. 
+        """
+        This function is meant to be used internally with the websocket to add to cache.
         i dont honestly recommend using this at any point either.
         shouldn't even be necessary to use it lol
         """

@@ -1,15 +1,14 @@
 import asyncio
-
-from .http import HTTPClient
-from .intents import Intents
-from .impl import Guild, Embed, Channel, InteractionCommand
-from .dispatcher import Dispatcher
-from .file import File
-from .enums import Statuses
-from .impl.cache import Cache
-from .gateway import Gateway
-
 from typing import List
+
+from .dispatcher import Dispatcher
+from .enums import Statuses
+from .file import File
+from .gateway import Gateway
+from .http import HTTPClient
+from .impl import Channel, Embed, Guild, InteractionCommand
+from .impl.cache import Cache
+from .intents import Intents
 
 
 class Client:
@@ -17,9 +16,7 @@ class Client:
         self.intents = intents
         self.token = token
         self._slash_commands = []
-        self.http = HTTPClient(
-            token=self.token, intents=self.intents.value
-        )
+        self.http = HTTPClient(token=self.token, intents=self.intents.value)
         self.cache = Cache(self.http)
         self.dispatcher = Dispatcher(self.cache)
         self.ws = Gateway(self.dispatcher, self.cache, self.http)

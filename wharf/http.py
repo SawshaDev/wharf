@@ -14,8 +14,8 @@ from .errors import BucketMigrated, HTTPException
 from .file import File
 from .gateway import Gateway
 from .impl import Embed, InteractionCommand
-from .impl.ratelimit import Ratelimiter
 from .impl.cache import Cache
+from .impl.ratelimit import Ratelimiter
 
 _log = logging.getLogger(__name__)
 
@@ -242,7 +242,9 @@ class HTTPClient:
         return await self.request(Route("GET", f"/applications/{me['id']}/commands"))
 
     def get_guild_members(self, guild_id: int, limit: int = 1000):
-        return self.request(Route("GET", f"/guilds/{guild_id}/members"), query_params={"limit": limit})
+        return self.request(
+            Route("GET", f"/guilds/{guild_id}/members"), query_params={"limit": limit}
+        )
 
     def get_guild_channels(self, guild_id: int):
         return self.request(Route("GET", f"/guilds/{guild_id}/channels"))
