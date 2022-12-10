@@ -100,7 +100,7 @@ class HTTPClient:
         return json.loads(text) if resp.content_type == "application/json" else text
 
     @staticmethod
-    def _prepare_data(data: Optional[dict[str, Any]], files: Optional[File]):
+    def _prepare_data(data: Optional[dict[str, Any]], files: Optional[List[File]]):
         pd = PreparedData()
 
         if data is not None and files is None:
@@ -113,9 +113,10 @@ class HTTPClient:
                 "payload_json", f"{json.dumps(data)}", content_type="application/json"
             )
 
-            form_dat.add_field("files[1]", files.fp, filename=files.filename)
+            for count, file in enumerate(files):
+                form_dat.add_field(f"files[{count}]", file.fp, filename=file.filename)
 
-            pd.multipart_content = form_dat
+                pd.multipart_content = form_dat
 
         return pd
 

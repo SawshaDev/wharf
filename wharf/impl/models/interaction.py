@@ -50,10 +50,8 @@ class Interaction:
         self.command = InteractionCommand._from_json(payload)
         self.options: List[InteractionOption] = []
         self.guild_id = payload.get("guild_id")
-        
-        self._make_options()
-        
 
+        self._make_options()
 
     @property
     def guild(self):
