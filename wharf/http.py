@@ -243,6 +243,9 @@ class HTTPClient:
     def get_guild_members(self, guild_id: int, limit: int = 1000):
         return self.request(Route("GET", f"/guilds/{guild_id}/members"), query_params={"limit": limit})
 
+    def get_guild_channels(self, guild_id: int):
+        return self.request(Route("GET", f"/guilds/{guild_id}/channels"))
+
     def interaction_respond(
         self, content: str, embed: Embed = None, *, id: int, token: str
     ):

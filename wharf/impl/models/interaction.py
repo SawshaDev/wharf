@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, List, Optional
 import discord_typings as dt
 
 if TYPE_CHECKING:
-    from ...client import Client
+    from ..cache import Cache
     from ..models import Embed
 
 
@@ -41,8 +41,8 @@ class InteractionOption:
 
 
 class Interaction:
-    def __init__(self, bot: Client, payload: dict):
-        self.bot = bot
+    def __init__(self, cache: Cache, payload: dict):
+        self.cache = cache
         self.payload = payload
         self.id = payload.get("id")
         self.token = payload.get("token")
@@ -50,16 +50,22 @@ class Interaction:
         self.command = InteractionCommand._from_json(payload)
         self.options: List[InteractionOption] = []
         self.guild_id = payload.get("guild_id")
-
-        print(self.payload)
+        
         self._make_options()
+        
+
+
+    @property
+    def guild(self):
+        return self.cache.get_guild(self.guild_id)
+
 
     async def reply(self, content: str, embed: Embed = None):
         """
         Replies to a discord interaction
         """
 
-        await self.bot.http.interaction_respond(content, id=self.id, token=self.token)
+        await self.cache.http.interaction_respond(content, id=self.id, token=self.token)
 
     def _make_options(self):
         if self.payload["data"].get("options"):

@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Callable, Coroutine, Dict, List, TypeVar
 from .impl import Interaction, Message
 
 if TYPE_CHECKING:
-    from .client import Client
+    from .impl.cache import Cache
 
 
 EventT = TypeVar("EventT")
@@ -20,19 +20,19 @@ _log = logging.getLogger(__name__)
 
 
 class Dispatcher:
-    def __init__(self, bot: Client):
+    def __init__(self, cache: Cache):
         self.events: Dict[str, List[CoroFunc]] = {}
-        self.bot = bot
+        self.cache = cache
 
     def filter_events(self, event_type: EventT, event_data=None):
         if event_type in ("message_create", "message_update"):
             if event_type == "message_update" and len(event_data) == 4:
                 return
 
-            return Message(event_data, self.bot)
+            return Message(event_data, self.cache)
 
         elif event_type == "interaction_create":
-            return Interaction(self.bot, event_data)
+            return Interaction(self.cache, event_data)
 
         elif event_type == "ready":
             return None

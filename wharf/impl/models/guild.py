@@ -6,6 +6,8 @@ from .member import Member
 
 from .role import Role
 
+from .channel import Channel
+
 if TYPE_CHECKING:
     from ..cache import Cache
 
@@ -15,6 +17,7 @@ class Guild:
         self._from_data(data)
         self.cache = cache
         self._members: Dict[int, Member] = {}
+        self._channels: Dict[int, Channel] = {}
 
 
     def _from_data(self, guild: dt.GuildData):
@@ -49,9 +52,25 @@ class Guild:
 
         self._members[member.id] = member
 
+    def _add_channel(self, channel: Channel):
+        """ 
+        This function is meant to be used internally with the websocket to add to cache. 
+        i dont honestly recommend using this at any point either.
+        shouldn't even be necessary to use it lol
+        """
+
+        self._channels[channel.id] = channel
+
     @property
     def members(self) -> List[Member]:
         """
         A list of all the members this server has.
         """
         return list(self._members.values())
+
+    @property
+    def channels(self) -> List[Channel]:
+        """
+        A list of all the channels this server has.
+        """
+        return list(self._channels.values())

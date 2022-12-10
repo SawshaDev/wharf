@@ -14,9 +14,14 @@ class Member:
         self.cache = cache
         self._from_data(payload)
 
+    def __str__(self) -> str:
+        return f"{self.name}#{self.discriminator}"
+
+
     def _from_data(self, payload: dt.GuildMemberData):
         self.guild_avatar = payload.get("avatar")
         self.joined_at = payload["joined_at"]
+        self.discriminator = payload["user"]["discriminator"]
         self.roles = payload.get("roles")
         self.id = payload["user"]["id"]
         self.name = payload["user"]["username"]

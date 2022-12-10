@@ -135,12 +135,11 @@ class Gateway:
         if not url:
             url = self.gw_url
 
-        self.ws = await self.session.ws_connect(self.gw_url)
+        self.ws = await self.session.ws_connect(url)
 
         self.resume = reconnect
 
         while True:
-
             msg = await self.ws.receive()
 
             if msg.type in (WSMsgType.BINARY, WSMsgType.TEXT):

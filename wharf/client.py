@@ -17,11 +17,11 @@ class Client:
         self.intents = intents
         self.token = token
         self._slash_commands = []
-        self.dispatcher = Dispatcher(self)
         self.http = HTTPClient(
             token=self.token, intents=self.intents.value
         )
         self.cache = Cache(self.http)
+        self.dispatcher = Dispatcher(self.cache)
         self.ws = Gateway(self.dispatcher, self.cache, self.http)
 
     def listen(self, name: str):
