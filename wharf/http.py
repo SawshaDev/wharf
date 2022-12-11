@@ -9,13 +9,11 @@ from urllib.parse import quote as urlquote
 import aiohttp
 
 from . import __version__
-from .dispatcher import Dispatcher
 from .errors import BucketMigrated, HTTPException
 from .file import File
-from .gateway import Gateway
 from .impl import Embed, InteractionCommand
-from .impl.cache import Cache
 from .impl.ratelimit import Ratelimiter
+from .enums import MessageFlags
 
 _log = logging.getLogger(__name__)
 
@@ -250,15 +248,25 @@ class HTTPClient:
         return self.request(Route("GET", f"/guilds/{guild_id}/channels"))
 
     def interaction_respond(
-        self, content: str, embed: Embed = None, *, id: int, token: str
+        self, content: str, *,  embed: Embed = None, id: int, token: str, flags: Optional[MessageFlags] = None
     ):
-        embeds = []
+
+
+        payload = {
+            "content": content
+        }
+
+        if flags:
+            payload["flags"] = flags.value
+
         if embed:
-            embeds.append(embed)
+            payload["embeds"] = [embed]
+
+        _log.info(payload)
 
         return self.request(
             Route("POST", f"/interactions/{id}/{token}/callback"),
-            json_params={"type": 4, "data": {"content": content, "embeds": embeds}},
+            json_params={"type": 4, "data": payload},
         )
 
     def send_message(

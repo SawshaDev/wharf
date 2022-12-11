@@ -8,20 +8,20 @@ import random
 import traceback
 import zlib
 from sys import platform as _os
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union, List
 
 from aiohttp import ClientSession, ClientWebSocketResponse, WSMsgType
 
 from .dispatcher import Dispatcher
 from .errors import GatewayReconnect, WebsocketClosed
 from .impl import Guild
+from .activities import Activity
 
 if TYPE_CHECKING:
     from .http import HTTPClient
     from .impl.cache import Cache
 
 
-logging.basicConfig(level=logging.INFO)
 _log = logging.getLogger(__name__)
 
 
@@ -112,8 +112,9 @@ class Gateway:
         await self.ws.send_json(data)
         _log.info("Sent json to the gateway successfully")
 
-    async def _change_precense(self, *, status: str):
-        activities = []  # Placeholder whilst i do more testing with presences uwu
+    async def _change_precense(self, *, status: str, activity: Activity = None):
+        activities = []
+        activities.append(activity.to_dict())
 
         payload = {
             "op": OPCodes.presence_update,
@@ -136,9 +137,9 @@ class Gateway:
 
         self.ws = await self.session.ws_connect(url)
 
-        self.resume = reconnect
+        self.reconnect = reconnect
 
-        while True:
+        while not self.is_closed:
             msg = await self.ws.receive()
 
             if msg.type in (WSMsgType.BINARY, WSMsgType.TEXT):
@@ -151,6 +152,7 @@ class Gateway:
                 data = json.loads(data)
 
             self._last_sequence = data["s"]
+            _log.info(data["s"])
 
             if data["op"] == OPCodes.hello:
                 self.heartbeat_interval = data["d"]["heartbeat_interval"]
@@ -159,31 +161,29 @@ class Gateway:
                     await self.send(self.resume_payload)
                 else:
                     await self.send(self.identify_payload)
+                    _log.info(self.identify_payload)
+                    _log.info(url)
 
                 asyncio.create_task(self.keep_heartbeat())
 
             if data["op"] == OPCodes.heartbeat:
                 await self.send(self.ping_payload)
 
-            _log.info(data["t"])
-
             if data["op"] == OPCodes.dispatch:
                 event_data = data["d"]
 
                 if data["t"] == "READY":
                     self.session_id = event_data["session_id"]
-                    self._resume_url = event_data["resume_gateway_url"]
+                    self._resume_url = event_data["resume_gateway_url"] 
 
                 if data["t"] == "GUILD_CREATE":
                     await self.cache.handle_guild_caching(event_data)
-
-                if data["t"] == "GUILD_MEMBER_ADD":
-                    _log.info(event_data)
 
                 if data["t"].lower() not in self.dispatcher.events.keys():
                     continue
 
                 self.dispatcher.dispatch(data["t"].lower(), event_data)
+
 
             if data["op"] == OPCodes.heartbeat_ack:
                 self._last_heartbeat_ack = datetime.datetime.now()
@@ -199,15 +199,16 @@ class Gateway:
             elif msg.type == WSMsgType.CLOSE:
                 raise WebsocketClosed(msg.data, msg.extra)
 
-    async def close(self, *, code: int = 1000, resume: bool = True):
+    async def close(self, *, code: int = 1000):
         if not self.ws:
             return
 
         if not self.is_closed:
             await self.ws.close(code=code)
-            
-            if resume:
+
+            if self.reconnect:
                 await self.connect(url=self._resume_url, reconnect=True)
+            
 
     @property
     def is_closed(self):

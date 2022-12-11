@@ -2,13 +2,14 @@ import asyncio
 from typing import List
 
 from .dispatcher import Dispatcher
-from .enums import Statuses
+from .enums import Status
 from .file import File
 from .gateway import Gateway
 from .http import HTTPClient
 from .impl import Channel, Embed, Guild, InteractionCommand
 from .impl.cache import Cache
 from .intents import Intents
+from .activities import Activity
 
 
 class Client:
@@ -30,8 +31,17 @@ class Client:
 
         return inner
 
-    async def change_presence(self, status: Statuses):
-        await self.ws._change_precense(status=status.value)
+    def get_user(self, user_id: int):
+        return self.cache.get_user(user_id)
+
+    def get_channel(self, *, guild_id: int, channel_id: int):
+        return self.cache.get_channel(guild_id, channel_id)
+    
+    def get_guild(self, guild_id: int):
+        return self.cache.get_guild(guild_id)
+
+    async def change_presence(self, *,status: Status, activity: Activity = None):
+        await self.ws._change_precense(status=status.value, activity=activity)
 
     async def fetch_channel(self, channel_id: int):
         return Channel(await self.http.get_channel(channel_id))

@@ -54,8 +54,8 @@ class Cache:
 
         return guild
 
-    def get_channel(self, channel_id: int) -> Channel:
-        return self.channels.get(channel_id)
+    def get_channel(self, guild_id: int,channel_id: int) -> Channel:
+        return self.channels.get(guild_id).get(channel_id)
 
     def add_channel(self, guild_id: int, payload: dt.ChannelData):
         if guild_id not in self.channels:
@@ -76,10 +76,6 @@ class Cache:
         return self.members.get(guild_id).get(member_id)
 
     def add_member(self, guild_id: dt.Snowflake, payload: dt.GuildMemberData):
-        """
-        Adds members to cache!
-        """
-
         if guild_id not in self.members:
             self.members[guild_id] = {}
 

@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, List, Optional
 
 import discord_typings as dt
 
+from ...enums import MessageFlags
+
 if TYPE_CHECKING:
     from ..cache import Cache
     from ..models import Embed
@@ -71,12 +73,12 @@ class Interaction:
     def guild(self):
         return self.cache.get_guild(self.guild_id)
 
-    async def reply(self, content: str, embed: Embed = None):
+    async def reply(self, content: str, *, embed: Optional[Embed] = None, flags: Optional[MessageFlags] = None) -> None: 
         """
         Replies to a discord interaction
         """
 
-        await self.cache.http.interaction_respond(content, id=self.id, token=self.token)
+        await self.cache.http.interaction_respond(content, embed=embed, flags=flags , id=self.id, token=self.token)
 
     def _make_options(self):
         if self.payload["data"].get("options"):
