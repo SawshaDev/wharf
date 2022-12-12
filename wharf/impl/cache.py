@@ -35,7 +35,7 @@ class Cache:
 
         if user:
             return user
-        
+
         user = User(payload, self)
         self.users[user.id] = user
         return user
@@ -54,7 +54,7 @@ class Cache:
 
         return guild
 
-    def get_channel(self, guild_id: int,channel_id: int) -> Channel:
+    def get_channel(self, guild_id: int, channel_id: int) -> Channel:
         return self.channels.get(guild_id).get(channel_id)
 
     def add_channel(self, guild_id: int, payload: dt.ChannelData):
@@ -99,7 +99,7 @@ class Cache:
             self.add_channel(guild_id, channel)
 
         for member in members:
-            self.add_user(member['user'])
+            self.add_user(member["user"])
             self.add_member(guild_id, member)
 
         return guild

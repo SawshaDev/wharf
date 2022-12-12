@@ -9,11 +9,11 @@ from urllib.parse import quote as urlquote
 import aiohttp
 
 from . import __version__
+from .enums import MessageFlags
 from .errors import BucketMigrated, HTTPException
 from .file import File
 from .impl import Embed, InteractionCommand
 from .impl.ratelimit import Ratelimiter
-from .enums import MessageFlags
 
 _log = logging.getLogger(__name__)
 
@@ -248,21 +248,21 @@ class HTTPClient:
         return self.request(Route("GET", f"/guilds/{guild_id}/channels"))
 
     def interaction_respond(
-        self, content: str, *,  embed: Embed = None, id: int, token: str, flags: Optional[MessageFlags] = None
+        self,
+        content: str,
+        *,
+        embed: Embed = None,
+        id: int,
+        token: str,
+        flags: Optional[MessageFlags] = None,
     ):
-
-
-        payload = {
-            "content": content
-        }
+        payload = {"content": content}
 
         if flags:
             payload["flags"] = flags.value
 
         if embed:
             payload["embeds"] = [embed]
-
-        _log.info(payload)
 
         return self.request(
             Route("POST", f"/interactions/{id}/{token}/callback"),
@@ -276,6 +276,11 @@ class HTTPClient:
             Route("POST", f"/channels/{channel}/messages"),
             json_params={"content": content, "embeds": [embed.to_dict()]},
             files=files,
+        )
+
+    def get_user(self, user_id: int):
+        return self.request(
+            Route("GET", f"/users/{user_id}")
         )
 
     def create_role(

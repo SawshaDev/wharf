@@ -35,5 +35,5 @@ class User:
     def banner(self) -> Optional[Asset]:
         if self._banner is not None:
             return Asset._from_user_banner(self.id, self._banner)
-        
+
         return None

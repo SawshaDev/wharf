@@ -7,6 +7,7 @@ class Status(Enum):
     dnd = "dnd"
     idle = "idle"
 
+
 class ActivityType(Enum):
     unknown = -1
     playing = 0
@@ -18,6 +19,7 @@ class ActivityType(Enum):
 
     def __int__(self) -> int:
         return self.value
+
 
 class MessageFlags(Enum):
     CROSSPOSTED = 1 << 0

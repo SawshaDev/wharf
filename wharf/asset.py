@@ -33,13 +33,12 @@ class Asset:
             animated=animated,
         )
 
-
     @classmethod
     def _from_user_banner(cls, user_id: int, banner_hash: str):
-        animated = banner_hash.startswith('a_')
-        format = 'gif' if animated else 'png'
+        animated = banner_hash.startswith("a_")
+        format = "gif" if animated else "png"
         return cls(
-            url=f'{cls.BASE_URL}/banners/{user_id}/{banner_hash}.{format}?size=512',
+            url=f"{cls.BASE_URL}/banners/{user_id}/{banner_hash}.{format}?size=512",
             key=banner_hash,
             animated=animated,
         )

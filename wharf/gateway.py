@@ -8,14 +8,14 @@ import random
 import traceback
 import zlib
 from sys import platform as _os
-from typing import TYPE_CHECKING, Any, Optional, Union, List
+from typing import TYPE_CHECKING, Any, List, Optional, Union
 
 from aiohttp import ClientSession, ClientWebSocketResponse, WSMsgType
 
+from .activities import Activity
 from .dispatcher import Dispatcher
 from .errors import GatewayReconnect, WebsocketClosed
 from .impl import Guild
-from .activities import Activity
 
 if TYPE_CHECKING:
     from .http import HTTPClient
@@ -152,7 +152,6 @@ class Gateway:
                 data = json.loads(data)
 
             self._last_sequence = data["s"]
-            _log.info(data["s"])
 
             if data["op"] == OPCodes.hello:
                 self.heartbeat_interval = data["d"]["heartbeat_interval"]
@@ -161,8 +160,6 @@ class Gateway:
                     await self.send(self.resume_payload)
                 else:
                     await self.send(self.identify_payload)
-                    _log.info(self.identify_payload)
-                    _log.info(url)
 
                 asyncio.create_task(self.keep_heartbeat())
 
@@ -174,7 +171,9 @@ class Gateway:
 
                 if data["t"] == "READY":
                     self.session_id = event_data["session_id"]
-                    self._resume_url = event_data["resume_gateway_url"] 
+                    self._resume_url = event_data["resume_gateway_url"]
+
+                    _log.info(self.resume_payload)
 
                 if data["t"] == "GUILD_CREATE":
                     await self.cache.handle_guild_caching(event_data)
@@ -183,7 +182,6 @@ class Gateway:
                     continue
 
                 self.dispatcher.dispatch(data["t"].lower(), event_data)
-
 
             if data["op"] == OPCodes.heartbeat_ack:
                 self._last_heartbeat_ack = datetime.datetime.now()
@@ -208,7 +206,6 @@ class Gateway:
 
             if self.reconnect:
                 await self.connect(url=self._resume_url, reconnect=True)
-            
 
     @property
     def is_closed(self):

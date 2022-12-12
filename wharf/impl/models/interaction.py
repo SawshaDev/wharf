@@ -53,7 +53,7 @@ class Interaction:
         self.options: List[InteractionOption] = []
         self.guild_id = payload.get("guild_id")
         self._member = payload.get("member")
-        
+
         if self._member:
             self._user = self._member.get("user")
         else:
@@ -63,22 +63,30 @@ class Interaction:
 
     @property
     def user(self):
-        return self.cache.get_user(self._user['id'])
+        return self.cache.get_user(self._user["id"])
 
     @property
     def member(self):
-        return self.cache.get_member(self.guild_id, self._member['id'])
+        return self.cache.get_member(self.guild_id, self._member["id"])
 
     @property
     def guild(self):
         return self.cache.get_guild(self.guild_id)
 
-    async def reply(self, content: str, *, embed: Optional[Embed] = None, flags: Optional[MessageFlags] = None) -> None: 
+    async def reply(
+        self,
+        content: str,
+        *,
+        embed: Optional[Embed] = None,
+        flags: Optional[MessageFlags] = None,
+    ) -> None:
         """
         Replies to a discord interaction
         """
 
-        await self.cache.http.interaction_respond(content, embed=embed, flags=flags , id=self.id, token=self.token)
+        await self.cache.http.interaction_respond(
+            content, embed=embed, flags=flags, id=self.id, token=self.token
+        )
 
     def _make_options(self):
         if self.payload["data"].get("options"):

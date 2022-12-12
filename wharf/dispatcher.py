@@ -5,7 +5,7 @@ import inspect
 import logging
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, Dict, List, TypeVar
 
-from .impl import Interaction, Message, Member
+from .impl import Interaction, Member, Message
 
 if TYPE_CHECKING:
     from .impl.cache import Cache
