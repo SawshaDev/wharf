@@ -279,9 +279,7 @@ class HTTPClient:
         )
 
     def get_user(self, user_id: int):
-        return self.request(
-            Route("GET", f"/users/{user_id}")
-        )
+        return self.request(Route("GET", f"/users/{user_id}"))
 
     def create_role(
         self,
