@@ -28,12 +28,13 @@ class User:
     @property
     def avatar(self) -> Optional[Asset]:
         if self._avatar is not None:
-            return Asset._from_avatar(self.id, self._avatar)
+            return Asset._from_avatar(self.id, self._avatar, self.cache)
         return None
 
     @property
     def banner(self) -> Optional[Asset]:
         if self._banner is not None:
-            return Asset._from_user_banner(self.id, self._banner)
+            return Asset._from_user_banner(self.id, self._banner, self.cache)
 
         return None
+

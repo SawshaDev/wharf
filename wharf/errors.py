@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Union, Dict, Any
 
 import discord_typings as dt
 from aiohttp import ClientResponse
@@ -35,45 +35,31 @@ def _shorten_error_dict(
 
 
 class HTTPException(BaseException):
-    """Represents an error while attempting to connect to the Discord REST API.
-    Args:
-        response (aiohttp.ClientResponse): The response from the attempted REST API request.
-        data (Union[discord_typings.HTTPErrorResponseData, str, None]): The raw data retrieved from the response.
-    Attributes:
-        text (str): The error text. Might be empty.
-        code (int): The Discord specfic error code of the request.
-    """
-
-    __slots__ = ("text", "code")
-
-    def __init__(
-        self,
-        response: ClientResponse,
-        data: Optional[Union[dt.HTTPErrorResponseData, str]],
-    ) -> None:
+    def __init__(self, response, message: Optional[Union[str, Dict[str, Any]]]):
+        self.response = response
+        self.status: int = response.status  # type: ignore # This attribute is filled by the library even if using requests
         self.code: int
         self.text: str
-        if isinstance(data, dict):
-            self.code = data.get("code", 0)
-            base = data.get("message", "")
-            if errors := data.get("errors"):
+        if isinstance(message, dict):
+            self.code = message.get('code', 0)
+            base = message.get('message', '')
+            errors = message.get('errors')
+            self._errors: Optional[Dict[str, Any]] = errors
+            if errors:
                 errors = _shorten_error_dict(errors)
-                helpful_msg = "In {0}: {0}".format(iter(errors.items()))
-                self.text = f"{base}\n{helpful_msg}"
+                helpful = '\n'.join('In %s: %s' % t for t in errors.items())
+                self.text = base + '\n' + helpful
             else:
                 self.text = base
         else:
-            self.text = data or ""
+            self.text = message or ''
             self.code = 0
 
-        formatted = "{0} {1} (error code: {2}"
-        if self.text:
-            formatted += ": {3}"
+        fmt = '{0.status} {0.reason} (error code: {1})'
+        if len(self.text):
+            fmt += ': {2}'
 
-        formatted += ")"
-
-        # more shitty aiohttp typing
-        super().__init__(formatted.format(response.status, response.reason, self.code, self.text))  # type: ignore
+        super().__init__(fmt.format(self.response, self.code, self.text))
 
 
 class BucketMigrated(BaseException):
@@ -84,9 +70,10 @@ class BucketMigrated(BaseException):
             f"The current bucket was migrated to another bucket at {discord_hash}"
         )
 
+class NotFound(HTTPException):
+    pass
 
 class GatewayReconnect(BaseException):
-
     __slots__ = ("url", "resume")
 
     def __init__(self, url: str, resume: bool):

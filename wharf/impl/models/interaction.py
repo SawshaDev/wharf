@@ -3,13 +3,20 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING, List, Optional
 
+import logging
+
 import discord_typings as dt
 
 from ...enums import MessageFlags
 
+from ...file import File
+
 if TYPE_CHECKING:
     from ..cache import Cache
     from ..models import Embed
+
+
+_log = logging.getLogger(__name__)
 
 
 class InteractionOptionType(Enum):
@@ -75,18 +82,20 @@ class Interaction:
 
     async def reply(
         self,
-        content: str,
+        content: str = None,
         *,
         embed: Optional[Embed] = None,
         flags: Optional[MessageFlags] = None,
+        file: Optional[File] = None
     ) -> None:
         """
         Replies to a discord interaction
         """
 
         await self.cache.http.interaction_respond(
-            content, embed=embed, flags=flags, id=self.id, token=self.token
+            content, embed=embed, flags=flags, id=self.id, token=self.token, file=file
         )
+
 
     def _make_options(self):
         if self.payload["data"].get("options"):

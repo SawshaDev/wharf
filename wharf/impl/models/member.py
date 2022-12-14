@@ -30,5 +30,5 @@ class Member:
     @property
     def avatar(self) -> Optional[Asset]:
         if self._avatar is not None:
-            return Asset._from_avatar(self.id, self._avatar)
+            return Asset._from_avatar(self.id, self._avatar, self.cache)
         return None

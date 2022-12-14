@@ -1,10 +1,14 @@
-from typing import TYPE_CHECKING, Dict, List
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 import discord_typings as dt
 
 from .channel import Channel
 from .member import Member
 from .role import Role
+
+from ...asset import Asset
 
 if TYPE_CHECKING:
     from ..cache import Cache
@@ -21,6 +25,7 @@ class Guild:
         self.name = guild.get("name")
         self.id = guild.get("id")
         self.icon_hash = guild.get("icon")
+        self.banner_hash = guild.get("banner")
 
     async def fetch_member(self, member_id: int):
         return Member(await self.cache.http.get_member(member_id, self.id))
@@ -71,3 +76,16 @@ class Guild:
         A list of all the channels this server has.
         """
         return list(self._channels.values())
+
+    @property
+    def icon(self) -> Optional[Asset]:
+        if self.icon_hash is None:
+            return None
+        return Asset._from_guild_icon(self.cache, self.id, self.icon_hash)
+    
+    @property
+    def banner(self) -> Optional[Asset]:
+        if self.banner_hash is None:
+            return None
+        return Asset._from_guild_image(self.cache, self.id, self.banner_hash, path='banners')
+

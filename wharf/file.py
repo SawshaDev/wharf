@@ -35,6 +35,7 @@ class File:
     ) -> None:
         self.fp: io.IOBase
         self._owner: bool
+
         if isinstance(fp, io.IOBase):
             if not (fp.seekable() and fp.readable()):
                 raise ValueError(f"IOBase object {fp!r} must be seekable & readable.")
@@ -78,3 +79,4 @@ class File:
         """
         if hard:
             self.fp.seek(0)
+

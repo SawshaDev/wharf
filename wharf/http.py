@@ -10,7 +10,7 @@ import aiohttp
 
 from . import __version__
 from .enums import MessageFlags
-from .errors import BucketMigrated, HTTPException
+from .errors import BucketMigrated, HTTPException, NotFound
 from .file import File
 from .impl import Embed, InteractionCommand
 from .impl.ratelimit import Ratelimiter
@@ -246,6 +246,14 @@ class HTTPClient:
 
     def get_guild_channels(self, guild_id: int):
         return self.request(Route("GET", f"/guilds/{guild_id}/channels"))
+    
+    async def read_from_cdn(self, url: str) -> Optional[bytes]:
+        async with self._session.get(url) as resp:
+            if 200 <= resp.status < 300:
+                return await resp.read()
+            elif resp.status == 404:
+                raise NotFound(resp, "Not Found :(")
+
 
     def interaction_respond(
         self,
@@ -255,18 +263,29 @@ class HTTPClient:
         id: int,
         token: str,
         flags: Optional[MessageFlags] = None,
+        file: Optional[File] = None
     ):
-        payload = {"content": content}
+        payload = {}
+        embeds = []
+        files = []
+
+        if content:
+            payload["content"] = content
 
         if flags:
             payload["flags"] = flags.value
 
         if embed:
-            payload["embeds"] = [embed]
+            embeds.append(embed)
+            payload["embeds"] = embeds
+
+        if file:
+            files.append(file)
 
         return self.request(
             Route("POST", f"/interactions/{id}/{token}/callback"),
             json_params={"type": 4, "data": payload},
+            files=files
         )
 
     def send_message(
