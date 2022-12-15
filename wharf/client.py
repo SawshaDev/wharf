@@ -17,10 +17,25 @@ class Client:
         self.intents = intents
         self.token = token
         self._slash_commands = []
-        self.http = HTTPClient(token=self.token, intents=self.intents.value)
+        self.http = HTTPClient()
         self.cache = Cache(self.http)
         self.dispatcher = Dispatcher(self.cache)
+
+    async def pre_ready(self):
+        """
+        Usually supposed to be overwritten lol
+        """
+        pass
+
+    async def login(self):
+        self.http.login(self.token, self.intents.value)
+
+        await self.pre_ready()
+    
+    async def connect(self):
         self.ws = Gateway(self.dispatcher, self.cache, self.http)
+        await self.ws.connect()
+
 
     def listen(self, name: str):
         def inner(func):
@@ -58,7 +73,8 @@ class Client:
         self._slash_commands.append(command._to_json())
 
     async def start(self):
-        await self.ws.connect()
+        await self.login()
+        await self.connect()
 
     async def close(self):
         await self.http._session.close()

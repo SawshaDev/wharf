@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class Intents(Enum):
+    
     NONE = 0
     GUILDS = 1 << 0
     GUILD_MEMBERS = 1 << 1
@@ -69,3 +70,6 @@ class Intents(Enum):
     @property
     def is_privileged(self) -> bool:
         return bool(self & self.ALL_PRIVILEGED)
+
+    def __int__(self) -> int:
+        return self.value

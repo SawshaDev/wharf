@@ -96,7 +96,6 @@ class Interaction:
             content, embed=embed, flags=flags, id=self.id, token=self.token, file=file
         )
 
-
     def _make_options(self):
         if self.payload["data"].get("options"):
             for option in self.payload["data"].get("options"):

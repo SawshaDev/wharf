@@ -68,11 +68,8 @@ class Route:
 
 
 class HTTPClient:
-    def __init__(self, *, token: str, intents: int):
-        self._intents = intents
-        self._token = token
-        self.__session: aiohttp.ClientSession = None  # type: ignore
-        self.base_headers = {"Authorization": f"Bot {self._token}"}
+    def __init__(self):
+        self._session: aiohttp.ClientSession = None  # type: ignore
         self.user_agent = "DiscordBot (https://github.com/sawshadev/wharf, {0}) Python/{1.major}.{1.minor}.{1.micro}".format(
             __version__, sys.version_info
         )
@@ -80,16 +77,15 @@ class HTTPClient:
         self.ratelimiter = Ratelimiter()
         self.req_id = 0
 
-        self.default_headers: dict[str, str] = {"Authorization": f"Bot {self._token}"}
+    def login(self, token: str, intents: int):
+        self._session = aiohttp.ClientSession(
+            headers={"User-Agent": self.user_agent}, json_serialize=json.dumps
+        )
 
-    @property
-    def _session(self):
-        if self.__session is None or self.__session.closed:
-            self.__session = aiohttp.ClientSession(
-                headers={"User-Agent": self.user_agent}, json_serialize=json.dumps
-            )
+        self._token = token
+        self._intents = intents
+        self.base_headers = {"Authorization": f"Bot {self._token}"}
 
-        return self.__session
 
     @staticmethod
     async def _text_or_json(resp: aiohttp.ClientResponse):
@@ -118,6 +114,8 @@ class HTTPClient:
 
         return pd
 
+    
+
     async def request(
         self,
         route: Route,
@@ -135,7 +133,7 @@ class HTTPClient:
 
         kwargs = kwargs or {}
 
-        headers: dict[str, str] = self.default_headers
+        headers: dict[str, str] = self.base_headers
 
         if reason:
             headers["X-Audit-Log-Reason"] = urlquote(reason, safe="/ ")
@@ -257,7 +255,7 @@ class HTTPClient:
 
     def interaction_respond(
         self,
-        content: str,
+        content: str = None,
         *,
         embed: Embed = None,
         id: int,
@@ -266,6 +264,7 @@ class HTTPClient:
         file: Optional[File] = None
     ):
         payload = {}
+        
         embeds = []
         files = []
 
@@ -276,16 +275,18 @@ class HTTPClient:
             payload["flags"] = flags.value
 
         if embed:
-            embeds.append(embed)
+            embeds.append(embed.to_dict())
             payload["embeds"] = embeds
 
         if file:
             files.append(file)
+            
+        _log.info(payload)
 
         return self.request(
             Route("POST", f"/interactions/{id}/{token}/callback"),
             json_params={"type": 4, "data": payload},
-            files=files
+            files=files if files else None
         )
 
     def send_message(
