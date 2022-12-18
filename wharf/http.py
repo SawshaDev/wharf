@@ -337,8 +337,6 @@ class HTTPClient:
 
         return self.request(route, reason=reason)
 
-    async def start(self):
-        await self._gateway.connect()
-
-    def run(self):
-        asyncio.run(self.start())
+    async def close(self):
+        if self._session:
+            await self._session.close()

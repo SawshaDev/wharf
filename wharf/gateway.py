@@ -43,11 +43,10 @@ class Gateway:
     if TYPE_CHECKING:
         heartbeat_interval: int
 
-    def __init__(self, dispatcher: Dispatcher, cache: Cache, http: HTTPClient):
+    def __init__(self, dispatcher: Dispatcher, cache: Cache):
         self.cache = cache
-        self.http = http
-        self.token = self.http._token
-        self.intents = self.http._intents
+        self.token = self.cache.http._token
+        self.intents = self.cache.http._intents
         self.api_version = 10
         self.gw_url: str = f"wss://gateway.discord.gg/?v={self.api_version}&encoding=json&compress=zlib-stream"
         self._last_sequence: Optional[int] = None

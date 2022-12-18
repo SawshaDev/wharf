@@ -1,8 +1,8 @@
 import asyncio
-from typing import List
+from typing import List, Optional
 
 from .activities import Activity
-from .dispatcher import Dispatcher
+from .dispatcher import Dispatcher, CoroFunc
 from .enums import Status
 from .file import File
 from .gateway import Gateway
@@ -20,6 +20,7 @@ class Client:
         self.http = HTTPClient()
         self.cache = Cache(self.http)
         self.dispatcher = Dispatcher(self.cache)
+        
 
     async def pre_ready(self):
         """
@@ -33,7 +34,7 @@ class Client:
         await self.pre_ready()
     
     async def connect(self):
-        self.ws = Gateway(self.dispatcher, self.cache, self.http)
+        self.ws = Gateway(self.dispatcher,self.cache)
         await self.ws.connect()
 
 
@@ -45,6 +46,9 @@ class Client:
                 self.dispatcher.add_callback(name, func)
 
         return inner
+
+    def subscribe(self, event: str, func: CoroFunc):
+        self.dispatcher.subscribe(event, func)
 
     def get_user(self, user_id: int):
         return self.cache.get_user(user_id)
@@ -76,10 +80,14 @@ class Client:
         await self.login()
         await self.connect()
 
+    
     async def close(self):
-        await self.http._session.close()
-        await self.ws.ws.close()
 
+        if self.ws is not None:
+            await self.ws.close()
+
+        await self.http.close()
+        
         api_commands = await self.http.get_app_commands()
 
         for command in api_commands:
