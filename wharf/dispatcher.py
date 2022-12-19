@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import inspect
 import logging
-from typing import TYPE_CHECKING, Any, Callable, Coroutine, Dict, List, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, Dict, List, TypeVar, Optional
 
 from .impl import Interaction, Member, Message
 
@@ -24,7 +24,10 @@ class Dispatcher:
         self.events: Dict[str, List[CoroFunc]] = {}
         self.cache = cache
 
-    def filter_events(self, event_type: EventT, event_data=None):
+    def filter_events(self, event_type: EventT, event_data):
+        if event_data is None:
+            raise ValueError("event data cannot be None")
+
         if event_type in ("message_create", "message_update"):
             if event_type == "message_update" and len(event_data) == 4:
                 return
@@ -60,18 +63,20 @@ class Dispatcher:
         return self.events.get(event_name)
 
     def dispatch(self, event_name: str, *args, **kwargs):
-        if not self.get_event(event_name):
-            raise ValueError("Event not in any events known :(")
-
-        event = self.events.get(event_name)
+        event = self.get_event(event_name)
+        
+        if event is None:
+            raise ValueError("Event not in any events known :(")        
 
         data = self.filter_events(event_name, *args)
 
-        if event is not None:
-            for callback in event:
-                if data is None:
-                    asyncio.create_task(callback())
-                else:
-                    asyncio.create_task(callback(data))
+    
+        for callback in event:
+            if data is None:
+                asyncio.create_task(callback())
+            else:
+                asyncio.create_task(callback(data))
 
-            _log.info("Dispatched event %r", event_name)
+        _log.info("Dispatched event %r", event_name)
+
+

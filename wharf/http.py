@@ -73,7 +73,7 @@ class HTTPClient:
         self.user_agent = "DiscordBot (https://github.com/sawshadev/wharf, {0}) Python/{1.major}.{1.minor}.{1.micro}".format(
             __version__, sys.version_info
         )
-        self.loop = asyncio.get_event_loop()
+        self.loop = None
         self.ratelimiter = Ratelimiter()
         self.req_id = 0
 
@@ -255,9 +255,9 @@ class HTTPClient:
 
     def interaction_respond(
         self,
-        content: str = None,
+        content: Optional[str] = None,
         *,
-        embed: Embed = None,
+        embed: Optional[Embed] = None,
         id: int,
         token: str,
         flags: Optional[MessageFlags] = None,
@@ -290,12 +290,30 @@ class HTTPClient:
         )
 
     def send_message(
-        self, channel: int, *, content: str, embed: Embed, files: List[File] = None
+        self, channel: int, *, content: str, embed: Optional[Embed] = None, file: Optional[File] = None
     ):
+        payload = {}
+        
+        embeds = []
+        files = []
+
+        if content:
+            payload["content"] = content
+
+        if embed:
+            embeds.append(embed.to_dict())
+            payload["embeds"] = embeds
+
+        if file:
+            files.append(file)
+            
+        _log.info(payload)
+
+
         return self.request(
             Route("POST", f"/channels/{channel}/messages"),
-            json_params={"content": content, "embeds": [embed.to_dict()]},
-            files=files,
+            json_params=payload,
+            files=files or None,
         )
 
     def get_user(self, user_id: int):
@@ -308,7 +326,7 @@ class HTTPClient:
         name: str,
         color: int = 0,
         hoist: bool = False,
-        reason: str = None,
+        reason: Optional[str] = None,
     ):
         return self.request(
             Route("POST", f"/guilds/{guild_id}/roles"),

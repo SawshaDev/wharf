@@ -53,7 +53,7 @@ class Gateway:
         self._first_heartbeat = True
         self.dispatcher = dispatcher
         self._decompresser = zlib.decompressobj()
-        self.loop = asyncio.get_event_loop()
+        self.loop = None
         self.session: Optional[ClientSession] = None
         self.ws: Optional[ClientWebSocketResponse] = None
 
@@ -171,8 +171,6 @@ class Gateway:
                 if data["t"] == "READY":
                     self.session_id = event_data["session_id"]
                     self._resume_url = event_data["resume_gateway_url"]
-
-                    _log.info(self.resume_payload)
 
                 if data["t"] == "GUILD_CREATE":
                     await self.cache.handle_guild_caching(event_data)

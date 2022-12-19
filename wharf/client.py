@@ -1,5 +1,5 @@
 import asyncio
-from typing import List, Optional
+from typing import List
 
 from .activities import Activity
 from .dispatcher import Dispatcher, CoroFunc
@@ -20,6 +20,10 @@ class Client:
         self.http = HTTPClient()
         self.cache = Cache(self.http)
         self.dispatcher = Dispatcher(self.cache)
+
+        # ws gets filled in later on
+        self.ws: Gateway = None # type: ignore
+       
         
 
     async def pre_ready(self):
@@ -80,9 +84,16 @@ class Client:
         await self.login()
         await self.connect()
 
-    
-    async def close(self):
 
+
+    def run(self):
+        try:
+            asyncio.run(self.start())
+        except (KeyboardInterrupt, RuntimeError):
+            asyncio.run(self.close())
+
+    async def close(self):
+        
         if self.ws is not None:
             await self.ws.close()
 
@@ -97,9 +108,3 @@ class Client:
                     continue
                 else:
                     continue
-
-    def run(self):
-        try:
-            asyncio.run(self.start())
-        except (KeyboardInterrupt, RuntimeError):
-            asyncio.run(self.close())
