@@ -37,7 +37,7 @@ class Asset:
             url=f"{cls.BASE_URL}/avatars/{user_id}/{avatar}.{formatted}?size=1024",
             key=avatar,
             animated=animated,
-            cache=cache
+            cache=cache,
         )
 
     @classmethod
@@ -48,27 +48,27 @@ class Asset:
             url=f"{cls.BASE_URL}/banners/{user_id}/{banner_hash}.{format}?size=512",
             key=banner_hash,
             animated=animated,
-            cache=cache
+            cache=cache,
         )
 
     @classmethod
     def _from_guild_icon(cls, cache: Cache, guild_id: int, icon_hash: str):
-        animated = icon_hash.startswith('a_')
-        format = 'gif' if animated else 'png'
+        animated = icon_hash.startswith("a_")
+        format = "gif" if animated else "png"
         return cls(
             cache=cache,
-            url=f'{cls.BASE_URL}/icons/{guild_id}/{icon_hash}.{format}?size=1024',
+            url=f"{cls.BASE_URL}/icons/{guild_id}/{icon_hash}.{format}?size=1024",
             key=icon_hash,
             animated=animated,
         )
 
     @classmethod
     def _from_guild_image(cls, cache: Cache, guild_id: int, image: str, path: str):
-        animated = image.startswith('a_')
-        format = 'gif' if animated else 'png'
+        animated = image.startswith("a_")
+        format = "gif" if animated else "png"
         return cls(
             cache=cache,
-            url=f'{cls.BASE_URL}/{path}/{guild_id}/{image}.{format}?size=1024',
+            url=f"{cls.BASE_URL}/{path}/{guild_id}/{image}.{format}?size=1024",
             key=image,
             animated=animated,
         )

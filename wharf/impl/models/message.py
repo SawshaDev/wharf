@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Dict
+from typing import TYPE_CHECKING, Dict, Optional
 
 import discord_typings as dt
 
@@ -23,8 +23,6 @@ class Message:
     @property
     def channel_id(self) -> int:
         return int(self._channel_id)
-
-        
 
     async def send(self, content: str):
         msg = await self.cache.http.send_message(self.channel_id, content=content)

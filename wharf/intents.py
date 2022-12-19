@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class Intents(Enum):
-    
+
     NONE = 0
     GUILDS = 1 << 0
     GUILD_MEMBERS = 1 << 1

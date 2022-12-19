@@ -26,3 +26,14 @@ class MessageFlags(Enum):
     IS_CROSSPOST = 1 << 1
     SUPRESS_EMBEDS = 1 << 2
     EPHEMERAL = 1 << 6
+
+
+class ChannelTypes(Enum):
+    # For now these are the most IMPORTANT types, others can be implemented on their own time.
+
+    GUILD_TEXT = 0
+    DM = 1
+    GUILD_VOICE = 2
+
+    def __int__(self) -> int:
+        return self.value

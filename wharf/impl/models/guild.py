@@ -4,11 +4,10 @@ from typing import TYPE_CHECKING, Dict, List, Optional
 
 import discord_typings as dt
 
+from ...asset import Asset
 from .channel import Channel
 from .member import Member
 from .role import Role
-
-from ...asset import Asset
 
 if TYPE_CHECKING:
     from ..cache import Cache
@@ -63,6 +62,12 @@ class Guild:
 
         self._channels[channel.id] = channel
 
+    def _remove_member(self, member_id: int):
+        self._members.pop(member_id)
+
+    def _remove_channel(self, channel_id: int):
+        self._channels.pop(channel_id)
+
     @property
     def members(self) -> List[Member]:
         """
@@ -82,10 +87,11 @@ class Guild:
         if self.icon_hash is None:
             return None
         return Asset._from_guild_icon(self.cache, self.id, self.icon_hash)
-    
+
     @property
     def banner(self) -> Optional[Asset]:
         if self.banner_hash is None:
             return None
-        return Asset._from_guild_image(self.cache, self.id, self.banner_hash, path='banners')
-
+        return Asset._from_guild_image(
+            self.cache, self.id, self.banner_hash, path="banners"
+        )

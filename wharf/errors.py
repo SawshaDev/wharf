@@ -1,4 +1,4 @@
-from typing import Optional, Union, Dict, Any
+from typing import Any, Dict, Optional, Union
 
 import discord_typings as dt
 from aiohttp import ClientResponse
@@ -41,23 +41,23 @@ class HTTPException(BaseException):
         self.code: int
         self.text: str
         if isinstance(message, dict):
-            self.code = message.get('code', 0)
-            base = message.get('message', '')
-            errors = message.get('errors')
+            self.code = message.get("code", 0)
+            base = message.get("message", "")
+            errors = message.get("errors")
             self._errors: Optional[Dict[str, Any]] = errors
             if errors:
                 errors = _shorten_error_dict(errors)
-                helpful = '\n'.join('In %s: %s' % t for t in errors.items())
-                self.text = base + '\n' + helpful
+                helpful = "\n".join("In %s: %s" % t for t in errors.items())
+                self.text = base + "\n" + helpful
             else:
                 self.text = base
         else:
-            self.text = message or ''
+            self.text = message or ""
             self.code = 0
 
-        fmt = '{0.status} {0.reason} (error code: {1})'
+        fmt = "{0.status} {0.reason} (error code: {1})"
         if len(self.text):
-            fmt += ': {2}'
+            fmt += ": {2}"
 
         super().__init__(fmt.format(self.response, self.code, self.text))
 
@@ -70,8 +70,10 @@ class BucketMigrated(BaseException):
             f"The current bucket was migrated to another bucket at {discord_hash}"
         )
 
+
 class NotFound(HTTPException):
     pass
+
 
 class GatewayReconnect(BaseException):
     __slots__ = ("url", "resume")

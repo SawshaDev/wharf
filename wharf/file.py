@@ -79,4 +79,3 @@ class File:
         """
         if hard:
             self.fp.seek(0)
-

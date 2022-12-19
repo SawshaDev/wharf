@@ -15,17 +15,31 @@ _log = getLogger(__name__)
 
 
 class Cache:
-    """
-    Handles all sorts of cache!
-
-    """
-
     def __init__(self, http: HTTPClient):
         self.http = http
         self.guilds: Dict[dt.Snowflake, Guild] = {}
         self.members: Dict[dt.Snowflake, Dict[str, Member]] = {}
         self.channels: Dict[dt.Snowflake, Dict[str, Channel]] = {}
         self.users: dict[dt.Snowflake, User] = {}
+
+    def remove_guild(self, guild_id: int) -> None:
+        self.guilds.pop(guild_id)
+        self.channels.pop(guild_id)
+        self.members.pop(guild_id)
+
+    def remove_channel(self, guild_id: int, channel_id: int) -> Guild:
+        guild = self.get_guild(guild_id)
+        guild._remove_channel(channel_id)
+        self.channels[guild_id].pop(channel_id)
+
+        return guild
+
+    def remove_member(self, guild_id: int, member_id: int) -> Guild:
+        guild = self.get_guild(guild_id)
+        guild._remove_member(member_id)
+        self.members[guild_id].pop(member_id)
+
+        return guild
 
     def get_user(self, user_id: dt.Snowflake):
         return self.users.get(user_id)

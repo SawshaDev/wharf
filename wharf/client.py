@@ -2,7 +2,7 @@ import asyncio
 from typing import List
 
 from .activities import Activity
-from .dispatcher import Dispatcher, CoroFunc
+from .dispatcher import CoroFunc, Dispatcher
 from .enums import Status
 from .file import File
 from .gateway import Gateway
@@ -22,9 +22,7 @@ class Client:
         self.dispatcher = Dispatcher(self.cache)
 
         # ws gets filled in later on
-        self.ws: Gateway = None # type: ignore
-       
-        
+        self.ws: Gateway = None  # type: ignore
 
     async def pre_ready(self):
         """
@@ -36,11 +34,10 @@ class Client:
         self.http.login(self.token, self.intents.value)
 
         await self.pre_ready()
-    
-    async def connect(self):
-        self.ws = Gateway(self.dispatcher,self.cache)
-        await self.ws.connect()
 
+    async def connect(self):
+        self.ws = Gateway(self.dispatcher, self.cache)
+        await self.ws.connect()
 
     def listen(self, name: str):
         def inner(func):
@@ -53,15 +50,6 @@ class Client:
 
     def subscribe(self, event: str, func: CoroFunc):
         self.dispatcher.subscribe(event, func)
-
-    def get_user(self, user_id: int):
-        return self.cache.get_user(user_id)
-
-    def get_channel(self, *, guild_id: int, channel_id: int):
-        return self.cache.get_channel(guild_id, channel_id)
-
-    def get_guild(self, guild_id: int):
-        return self.cache.get_guild(guild_id)
 
     async def change_presence(self, *, status: Status, activity: Activity = None):
         await self.ws._change_precense(status=status.value, activity=activity)
@@ -84,8 +72,6 @@ class Client:
         await self.login()
         await self.connect()
 
-
-
     def run(self):
         try:
             asyncio.run(self.start())
@@ -93,18 +79,8 @@ class Client:
             asyncio.run(self.close())
 
     async def close(self):
-        
+
         if self.ws is not None:
             await self.ws.close()
 
         await self.http.close()
-        
-        api_commands = await self.http.get_app_commands()
-
-        for command in api_commands:
-            for cached_command in self._slash_commands:
-                if command["name"] != cached_command["name"]:
-                    await self.http.delete_app_command(command)
-                    continue
-                else:
-                    continue

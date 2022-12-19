@@ -136,6 +136,8 @@ class Gateway:
 
         self.ws = await self.session.ws_connect(url)
 
+        _log.info("Connected to gateway")
+
         self.reconnect = reconnect
 
         while not self.is_closed:
@@ -172,13 +174,27 @@ class Gateway:
                     self.session_id = event_data["session_id"]
                     self._resume_url = event_data["resume_gateway_url"]
 
-                if data["t"] == "GUILD_CREATE":
-                    await self.cache.handle_guild_caching(event_data)
+                # As messy as this all is, this probably is best here.
+                elif data["t"] == "GUILD_CREATE":
+                    asyncio.create_task(self.cache.handle_guild_caching(event_data))
 
-                if data["t"].lower() not in self.dispatcher.events.keys():
-                    continue
+                elif data["t"] == "GUILD_REMOVE":
+                    self.cache.remove_guild(event_data["id"])
 
-                self.dispatcher.dispatch(data["t"].lower(), event_data)
+                elif data["t"] == "GUILD_MEMBER_REMOVE":
+                    self.cache.remove_member(
+                        event_data["guild_id"], event_data["user"]["id"]
+                    )
+
+                elif data["t"] == "CHANNEL_DELETE":
+                    self.cache.remove_channel(event_data["guild_id"], event_data["id"])
+
+                else:
+
+                    if data["t"].lower() not in self.dispatcher.events.keys():
+                        continue
+
+                    self.dispatcher.dispatch(data["t"].lower(), event_data)
 
             if data["op"] == OPCodes.heartbeat_ack:
                 self._last_heartbeat_ack = datetime.datetime.now()

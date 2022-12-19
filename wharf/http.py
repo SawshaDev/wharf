@@ -86,7 +86,6 @@ class HTTPClient:
         self._intents = intents
         self.base_headers = {"Authorization": f"Bot {self._token}"}
 
-
     @staticmethod
     async def _text_or_json(resp: aiohttp.ClientResponse):
         text = await resp.text()
@@ -113,8 +112,6 @@ class HTTPClient:
                 pd.multipart_content = form_dat
 
         return pd
-
-    
 
     async def request(
         self,
@@ -244,14 +241,13 @@ class HTTPClient:
 
     def get_guild_channels(self, guild_id: int):
         return self.request(Route("GET", f"/guilds/{guild_id}/channels"))
-    
+
     async def read_from_cdn(self, url: str) -> Optional[bytes]:
         async with self._session.get(url) as resp:
             if 200 <= resp.status < 300:
                 return await resp.read()
             elif resp.status == 404:
                 raise NotFound(resp, "Not Found :(")
-
 
     def interaction_respond(
         self,
@@ -261,10 +257,10 @@ class HTTPClient:
         id: int,
         token: str,
         flags: Optional[MessageFlags] = None,
-        file: Optional[File] = None
+        file: Optional[File] = None,
     ):
         payload = {}
-        
+
         embeds = []
         files = []
 
@@ -280,20 +276,25 @@ class HTTPClient:
 
         if file:
             files.append(file)
-            
+
         _log.info(payload)
 
         return self.request(
             Route("POST", f"/interactions/{id}/{token}/callback"),
             json_params={"type": 4, "data": payload},
-            files=files if files else None
+            files=files if files else None,
         )
 
     def send_message(
-        self, channel: int, *, content: str, embed: Optional[Embed] = None, file: Optional[File] = None
+        self,
+        channel: int,
+        *,
+        content: str,
+        embed: Optional[Embed] = None,
+        file: Optional[File] = None,
     ):
         payload = {}
-        
+
         embeds = []
         files = []
 
@@ -306,9 +307,8 @@ class HTTPClient:
 
         if file:
             files.append(file)
-            
-        _log.info(payload)
 
+        _log.info(payload)
 
         return self.request(
             Route("POST", f"/channels/{channel}/messages"),
@@ -341,8 +341,9 @@ class HTTPClient:
     def get_guild(self, guild_id: int):
         return self.request(Route("GET", f"/guilds/{guild_id}"))
 
-    def get_channel(self, channel_id: int):
-        return self.request(Route("GET", f"/channels/{channel_id}"))
+    async def get_channel(self, channel_id: int):
+        guild = await self.request(Route("GET", f"/channels/{channel_id}"))
+        return guild
 
     def get_me(self):
         return self.request(Route("GET", "/users/@me"))

@@ -1,14 +1,12 @@
 from __future__ import annotations
 
+import logging
 from enum import Enum
 from typing import TYPE_CHECKING, List, Optional
-
-import logging
 
 import discord_typings as dt
 
 from ...enums import MessageFlags
-
 from ...file import File
 
 if TYPE_CHECKING:
@@ -86,7 +84,7 @@ class Interaction:
         *,
         embed: Optional[Embed] = None,
         flags: Optional[MessageFlags] = None,
-        file: Optional[File] = None
+        file: Optional[File] = None,
     ) -> None:
         """
         Replies to a discord interaction
