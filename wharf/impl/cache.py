@@ -24,7 +24,7 @@ class Cache:
 
     def remove_guild(self, guild_id: int) -> None:
         guild = self.get_guild(guild_id)
-        
+
         guild._members = {}
         guild._channels = {}
         self.channels.pop(guild_id)
