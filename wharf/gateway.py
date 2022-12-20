@@ -178,7 +178,7 @@ class Gateway:
                 elif data["t"] == "GUILD_CREATE":
                     asyncio.create_task(self.cache.handle_guild_caching(event_data))
 
-                elif data["t"] == "GUILD_REMOVE":
+                elif data["t"] == "GUILD_DELETE":
                     self.cache.remove_guild(event_data["id"])
 
                 elif data["t"] == "GUILD_MEMBER_REMOVE":

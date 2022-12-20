@@ -23,9 +23,13 @@ class Cache:
         self.users: dict[dt.Snowflake, User] = {}
 
     def remove_guild(self, guild_id: int) -> None:
-        self.guilds.pop(guild_id)
+        guild = self.get_guild(guild_id)
+        
+        guild._members = {}
+        guild._channels = {}
         self.channels.pop(guild_id)
         self.members.pop(guild_id)
+        self.guilds.pop(guild_id)
 
     def remove_channel(self, guild_id: int, channel_id: int) -> Guild:
         guild = self.get_guild(guild_id)
