@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from asyncio import gather
 from logging import getLogger
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 import discord_typings as dt
 
-from ..impl import Channel, Guild, Member, User
+from ..impl import TextChannel, Guild, Member, User
 
 if TYPE_CHECKING:
     from ..http import HTTPClient
@@ -17,9 +17,9 @@ _log = getLogger(__name__)
 class Cache:
     def __init__(self, http: HTTPClient):
         self.http = http
-        self.guilds: Dict[dt.Snowflake, Guild] = {}
+        self.guilds: Dict[int, Guild] = {}
         self.members: Dict[dt.Snowflake, Dict[str, Member]] = {}
-        self.channels: Dict[dt.Snowflake, Dict[str, Channel]] = {}
+        self.channels: Dict[dt.Snowflake, Dict[str, TextChannel]] = {}
         self.users: dict[dt.Snowflake, User] = {}
 
     def remove_guild(self, guild_id: int) -> None:
@@ -30,6 +30,7 @@ class Cache:
         self.channels.pop(guild_id)
         self.members.pop(guild_id)
         self.guilds.pop(guild_id)
+
 
     def remove_channel(self, guild_id: int, channel_id: int) -> Guild:
         guild = self.get_guild(guild_id)
@@ -58,7 +59,7 @@ class Cache:
         self.users[user.id] = user
         return user
 
-    def get_guild(self, guild_id: dt.Snowflake):
+    def get_guild(self, guild_id: int):
         return self.guilds.get(guild_id)
 
     def add_guild(self, payload: dt.GuildData):
@@ -68,14 +69,15 @@ class Cache:
 
         guild = Guild(payload, self)
 
-        self.guilds[guild.id] = guild
+        id = int(guild.id)
+        self.guilds[id] = guild
 
         return guild
 
-    def get_channel(self, guild_id: int, channel_id: int) -> Channel:
+    def get_channel(self, guild_id: int, channel_id: int) -> TextChannel:
         return self.channels.get(guild_id).get(channel_id)
 
-    def add_channel(self, guild_id: int, payload: dt.ChannelData):
+    def add_channel(self, guild_id: int, payload: dt.ChannelData) -> TextChannel:
         if guild_id not in self.channels:
             self.channels[guild_id] = {}
 
@@ -84,7 +86,7 @@ class Cache:
         if channel:
             return channel
 
-        channel = Channel(payload, self)
+        channel = TextChannel(payload, self)
         guild = self.get_guild(guild_id)
         self.channels[guild_id][channel.id] = channel
         guild._add_channel(channel)
@@ -126,4 +128,4 @@ class Cache:
         _log.info("Adding guild %s to cache!", data["id"])
         self.add_guild(data)
         _log.info("Populating guild %s's cache", data["id"])
-        await self.populate_server(data["id"])
+        await self.populate_server(int(data["id"]))

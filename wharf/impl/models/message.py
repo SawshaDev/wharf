@@ -17,8 +17,16 @@ class Message:
 
     def _from_data(self, message: Dict[str, str]):
         self._content = message.get("content")
-        self._author = message["author"]
+        self._author_id = message["author"]
         self._channel_id = message["channel_id"]
+
+    @property
+    def content(self) -> str:
+        return self._content
+    
+    @property
+    def author(self) -> User: 
+        return self.cache.get_user(self._author_id)
 
     @property
     def channel_id(self) -> int:

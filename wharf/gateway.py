@@ -5,20 +5,17 @@ import datetime
 import json
 import logging
 import random
-import traceback
 import zlib
 from sys import platform as _os
-from typing import TYPE_CHECKING, Any, List, Optional, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Union, Dict
 
 from aiohttp import ClientSession, ClientWebSocketResponse, WSMsgType
 
 from .activities import Activity
 from .dispatcher import Dispatcher
 from .errors import GatewayReconnect, WebsocketClosed
-from .impl import Guild
 
 if TYPE_CHECKING:
-    from .http import HTTPClient
     from .impl.cache import Cache
 
 
@@ -42,6 +39,8 @@ class OPCodes:
 class Gateway:
     if TYPE_CHECKING:
         heartbeat_interval: int
+        ws: ClientWebSocketResponse
+        _resume_url: str
 
     def __init__(self, dispatcher: Dispatcher, cache: Cache):
         self.cache = cache
@@ -49,13 +48,14 @@ class Gateway:
         self.intents = self.cache.http._intents
         self.api_version = 10
         self.gw_url: str = f"wss://gateway.discord.gg/?v={self.api_version}&encoding=json&compress=zlib-stream"
-        self._last_sequence: Optional[int] = None
         self._first_heartbeat = True
         self.dispatcher = dispatcher
         self._decompresser = zlib.decompressobj()
         self.loop = None
         self.session: Optional[ClientSession] = None
         self.ws: Optional[ClientWebSocketResponse] = None
+        self._last_sequence: Optional[int] = None
+        self._cached_guilds: bool = False
 
     def _decompress_msg(self, msg: bytes):
         ZLIB_SUFFIX = b"\x00\x00\xff\xff"
@@ -88,14 +88,22 @@ class Gateway:
             "op": OPCodes.resume,
             "d": {
                 "token": self.token,
-                "seq": self._last_sequence,
+                "seq": self._last_sequence or 0,
                 "session_id": self.session_id,
-            },
+            }
         }
 
     @property
     def ping_payload(self):
-        return {"op": OPCodes.heartbeat, "d": self._last_sequence}
+        payload = {"op": OPCodes.heartbeat}
+
+        if self._last_sequence is None:
+            payload["d"] = {}
+        else:
+            payload["d"] = self._last_sequence
+
+        return payload
+
 
     async def keep_heartbeat(self):
         jitters = self.heartbeat_interval
@@ -127,18 +135,11 @@ class Gateway:
 
         await self.ws.send_json(payload)
 
-    async def connect(self, *, url: str = None, reconnect: bool = False):
-        if not self.session:
-            self.session = ClientSession()
+    async def connect(self, *, url: Optional[str] = None, reconnect: Optional[bool] = False):
 
-        if not url:
-            url = self.gw_url
-
-        self.ws = await self.session.ws_connect(url)
+        self.ws = await self.cache.http._session.ws_connect(url or self.gw_url)
 
         _log.info("Connected to gateway")
-
-        self.reconnect = reconnect
 
         while not self.is_closed:
             msg = await self.ws.receive()
@@ -150,32 +151,36 @@ class Gateway:
                 elif msg.type == WSMsgType.TEXT:
                     data = msg.data
 
-                data = json.loads(data)
+                data: Dict[Any, str] = json.loads(data)
 
-            self._last_sequence = data["s"]
+            if data.get("s"):
+                self._last_sequence = data["s"]
+
 
             if data["op"] == OPCodes.hello:
                 self.heartbeat_interval = data["d"]["heartbeat_interval"]
+
+                asyncio.create_task(self.keep_heartbeat())
 
                 if reconnect:
                     await self.send(self.resume_payload)
                 else:
                     await self.send(self.identify_payload)
 
-                asyncio.create_task(self.keep_heartbeat())
 
-            if data["op"] == OPCodes.heartbeat:
+            elif data["op"] == OPCodes.heartbeat:
                 await self.send(self.ping_payload)
 
-            if data["op"] == OPCodes.dispatch:
+            elif data["op"] == OPCodes.dispatch:
                 event_data = data["d"]
 
                 if data["t"] == "READY":
                     self.session_id = event_data["session_id"]
                     self._resume_url = event_data["resume_gateway_url"]
 
+           
                 # As messy as this all is, this probably is best here.
-                elif data["t"] == "GUILD_CREATE":
+                if data["t"] == "GUILD_CREATE":
                     asyncio.create_task(self.cache.handle_guild_caching(event_data))
 
                 elif data["t"] == "GUILD_DELETE":
@@ -196,29 +201,29 @@ class Gateway:
 
                     self.dispatcher.dispatch(data["t"].lower(), event_data)
 
-            if data["op"] == OPCodes.heartbeat_ack:
+            elif data["op"] == OPCodes.heartbeat_ack:
                 self._last_heartbeat_ack = datetime.datetime.now()
 
-            if data["op"] == OPCodes.reconnect:
-                _log.info("reconnected!!")
-                await self.close(resume=True)
+            elif data["op"] == OPCodes.resume:
+                await self.close(code=4000, resume=True)
 
-            if data["op"] == OPCodes.invalid_session:
-                await self.ws.close(code=4001)
-                break
+            elif data["op"] == OPCodes.reconnect:
+                _log.info("Reconnected! :)")
+
+            elif data["op"] == OPCodes.invalid_session:
+                _log.info("Invalid session! We are not reconnecting.")
+                await self.close(code=4001, resume=False) # If we're getting an invalid session, do NOT try to reconnect
+                break                                     # We get invalid session for various reasons: https://discord.com/developers/docs/topics/gateway-events#invalid-session
 
             elif msg.type == WSMsgType.CLOSE:
                 raise WebsocketClosed(msg.data, msg.extra)
 
-    async def close(self, *, code: int = 1000):
+    async def close(self, *, code: int = 1000, resume: bool = True):
         if not self.ws:
             return
 
         if not self.is_closed:
             await self.ws.close(code=code)
-
-            if self.reconnect:
-                await self.connect(url=self._resume_url, reconnect=True)
 
     @property
     def is_closed(self):

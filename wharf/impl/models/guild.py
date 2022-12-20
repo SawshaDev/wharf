@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Dict, List, Optional
 import discord_typings as dt
 
 from ...asset import Asset
-from .channel import Channel
+from .channel import TextChannel
 from .member import Member
 from .role import Role
 
@@ -18,11 +18,11 @@ class Guild:
         self._from_data(data)
         self.cache = cache
         self._members: Dict[int, Member] = {}
-        self._channels: Dict[int, Channel] = {}
+        self._channels: Dict[int, TextChannel] = {}
 
     def _from_data(self, guild: dt.GuildData):
         self.name = guild.get("name")
-        self.id = guild.get("id")
+        self.id: int = guild.get("id")
         self.icon_hash = guild.get("icon")
         self.banner_hash = guild.get("banner")
 
@@ -53,7 +53,7 @@ class Guild:
 
         self._members[member.id] = member
 
-    def _add_channel(self, channel: Channel):
+    def _add_channel(self, channel: TextChannel):
         """
         This function is meant to be used internally with the websocket to add to cache.
         i dont honestly recommend using this at any point either.
@@ -76,7 +76,7 @@ class Guild:
         return list(self._members.values())
 
     @property
-    def channels(self) -> List[Channel]:
+    def channels(self) -> List[TextChannel]:
         """
         A list of all the channels this server has.
         """

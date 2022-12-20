@@ -7,9 +7,10 @@ from .enums import Status
 from .file import File
 from .gateway import Gateway
 from .http import HTTPClient
-from .impl import Channel, Embed, Guild, InteractionCommand, User
+from .impl import check_channel_type, Guild, InteractionCommand, User
 from .impl.cache import Cache
 from .intents import Intents
+from .errors import GatewayReconnect
 
 
 class Client:
@@ -36,8 +37,12 @@ class Client:
         await self.pre_ready()
 
     async def connect(self):
-        self.ws = Gateway(self.dispatcher, self.cache)
-        await self.ws.connect()
+        try:
+            self.ws = Gateway(self.dispatcher, self.cache)
+            await self.ws.connect()
+        except Exception as e:
+            print(e)
+            await self.ws.connect(url=self.ws._resume_url, reconnect=True)
 
     def listen(self, name: str):
         def inner(func):
@@ -58,7 +63,9 @@ class Client:
         return User(await self.http.get_user(user_id), self.cache)
 
     async def fetch_channel(self, channel_id: int):
-        return Channel(await self.http.get_channel(channel_id), self.cache)
+        resp = await self.http.get_channel(channel_id)
+
+        return check_channel_type(resp, self.cache)
 
     async def fetch_guild(self, guild_id: int):
 

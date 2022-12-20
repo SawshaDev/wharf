@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import discord_typings as dt
 
@@ -38,6 +38,10 @@ class TextChannel(Channel):
     def name(self) -> str:
         return self._payload.get("name")
 
+    @property
+    def guild(self):
+        return self.cache.get_guild(self._payload.get("guild_id"))
+
 
 class DMChannel(Channel):
     def __init__(self, payload: dt.DMChannelData, cache: Cache):
@@ -51,5 +55,10 @@ class DMChannel(Channel):
             self.recipients.append(User(recipient, self.cache))
 
 
-def check_channel_type(self):
-    pass
+def check_channel_type(data: Any, cache: "Cache"):
+    type = data["type"]
+
+    if type == ChannelTypes.GUILD_TEXT:
+        return TextChannel(data, cache)
+    elif type == ChannelTypes.DM:
+        return DMChannel(data, cache)
