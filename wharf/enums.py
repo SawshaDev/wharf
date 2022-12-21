@@ -1,11 +1,19 @@
 from enum import Enum
 
-
 class Status(Enum):
     online = "online"
     offline = "offline"
     dnd = "dnd"
     idle = "idle"
+
+
+class InteractionOptionType(Enum):
+    string = 3
+    number = 4
+    user = 6
+    channel = 7
+    role = 8
+    attachment = 10
 
 
 class ActivityType(Enum):

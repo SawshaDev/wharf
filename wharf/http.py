@@ -251,14 +251,36 @@ class HTTPClient:
 
     def interaction_respond(
         self,
-        content: Optional[str] = None,
-        *,
-        embed: Optional[Embed] = None,
         id: int,
         token: str,
+        type: int, 
+        *,
+        content: Optional[str] = None,
+        embed: Optional[Embed] = None,
         flags: Optional[MessageFlags] = None,
         file: Optional[File] = None,
     ):
+        """Responds to an interaction
+    
+        Parameters
+        -----------
+        id: :class:`int`
+            ID of the received interaction   
+        token: :class:`str`
+            Token of the received interaction
+        type: :class:`int`
+            Type that the responded interaction should be
+        content: Optional[:class:`str`]
+            The content to send
+        embed: Optional[:class:`wharf.Embed`]
+            Embed that should or should not be sent
+        flags: Optional[:class:`wharf.MessageFlags`]
+            Flags that go along with the sent interaction
+        file: Optional[:class:`wharf.File`]
+            File that should or should not be sent
+        """
+
+
         payload = {}
 
         embeds = []
@@ -277,11 +299,9 @@ class HTTPClient:
         if file:
             files.append(file)
 
-        _log.info(payload)
-
         return self.request(
             Route("POST", f"/interactions/{id}/{token}/callback"),
-            json_params={"type": 4, "data": payload},
+            json_params={"type": type, "data": payload},
             files=files if files else None,
         )
 

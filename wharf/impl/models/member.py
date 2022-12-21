@@ -6,6 +6,8 @@ import discord_typings as dt
 
 from ...asset import Asset
 
+from .role import Role
+
 if TYPE_CHECKING:
     from ..cache import Cache
 
@@ -13,7 +15,11 @@ if TYPE_CHECKING:
 class Member:
     def __init__(self, payload: dt.GuildMemberData, cache: "Cache"):
         self.cache = cache
+        self._payload = payload
         self._from_data(payload)
+
+        self._roles = []
+        self._get_roles()
 
     def __str__(self) -> str:
         return f"{self.name}#{self.discriminator}"
@@ -22,10 +28,14 @@ class Member:
         self.guild_avatar = payload.get("avatar")
         self.joined_at = payload["joined_at"]
         self.discriminator = payload["user"]["discriminator"]
-        self.roles = payload.get("roles")
-        self.id = payload["user"]["id"]
+        self.id = int(payload["user"]["id"])
         self.name = payload["user"]["username"]
         self._avatar = payload["user"].get("avatar")
+
+    def _get_roles(self):
+        if self._payload.get("roles"):
+            for role in self._payload.get("roles"):
+                self._roles.append(Role(role, self.cache))
 
     @property
     def avatar(self) -> Optional[Asset]:

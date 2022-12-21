@@ -40,6 +40,9 @@ class Cache:
         return guild
 
     def remove_member(self, guild_id: int, member_id: int) -> Guild:
+        if guild_id not in self.members or member_id not in self.members.values():
+            raise ValueError("Member does not appear there!")
+
         guild = self.get_guild(guild_id)
         guild._remove_member(member_id)
         self.members[guild_id].pop(member_id)
@@ -92,7 +95,7 @@ class Cache:
         guild._add_channel(channel)
         return channel
 
-    def get_member(self, guild_id: str, member_id: str) -> Member:
+    def get_member(self, guild_id: str, member_id: int) -> Member:
         return self.members.get(guild_id).get(member_id)
 
     def add_member(self, guild_id: dt.Snowflake, payload: dt.GuildMemberData):

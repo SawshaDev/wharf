@@ -37,3 +37,4 @@ class User:
             return Asset._from_user_banner(self.id, self._banner, self.cache)
 
         return None
+

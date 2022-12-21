@@ -1,29 +1,17 @@
 from __future__ import annotations
 
-import logging
-from enum import Enum
+
 from typing import TYPE_CHECKING, List, Optional
 
 import discord_typings as dt
 
-from ...enums import MessageFlags
+from ...enums import MessageFlags, InteractionOptionType
 from ...file import File
 
 if TYPE_CHECKING:
     from ..cache import Cache
     from ..models import Embed
 
-
-_log = logging.getLogger(__name__)
-
-
-class InteractionOptionType(Enum):
-    string = 3
-    number = 4
-    user = 6
-    channel = 7
-    role = 8
-    attachment = 10
 
 
 class InteractionOption:
@@ -82,6 +70,7 @@ class Interaction:
         self,
         content: str = None,
         *,
+        type: int,
         embed: Optional[Embed] = None,
         flags: Optional[MessageFlags] = None,
         file: Optional[File] = None,
