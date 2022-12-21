@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Dict, Any
 
 import discord_typings as dt
 
@@ -42,8 +42,12 @@ class Interaction:
         self.id = payload.get("id")
         self.token = payload.get("token")
         self.channel_id = payload.get("channel_id")
-        self.command = InteractionCommand._from_json(payload)
-        self.options: List[InteractionOption] = []
+        self.type = payload["type"]
+        if self.type == 2:
+            self.command = InteractionCommand._from_json(payload)
+            self.options: List[InteractionOption] = []
+            self._make_options()
+
         self.guild_id = payload.get("guild_id")
         self._member = payload.get("member")
 
@@ -51,9 +55,6 @@ class Interaction:
             self._user = self._member.get("user")
         else:
             self._user = self.payload.get("user")
-
-        self._make_options()
-
     @property
     def user(self):
         return self.cache.get_user(self._user["id"])
@@ -68,19 +69,35 @@ class Interaction:
 
     async def reply(
         self,
-        content: str = None,
+        content: Optional[str] = None,
         *,
-        type: int,
         embed: Optional[Embed] = None,
         flags: Optional[MessageFlags] = None,
         file: Optional[File] = None,
+        components: Optional[List[Dict[Any, Any]]] = None,
+        type: int = 4
     ) -> None:
         """
         Replies to a discord interaction
+    
+        Parameters
+        -----------
+        content: Optional[:class:`str`]
+            The content to send
+        embed: Optional[:class:`wharf.Embed`]
+            Embed that should or should not be sent
+        flags: Optional[:class:`wharf.MessageFlags`]
+            Flags that go along with the sent interaction
+        file: Optional[:class:`wharf.File`]
+            File that should or should not be sent
+        type: :class:`int`
+            Type that the responded interaction should be
+            https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type
         """
 
+
         await self.cache.http.interaction_respond(
-            content, embed=embed, flags=flags, id=self.id, token=self.token, file=file
+           self.id, self.token, type, content=content, embed=embed, flags=flags,  file=file, components=components
         )
 
     def _make_options(self):
