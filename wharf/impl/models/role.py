@@ -12,7 +12,7 @@ class Role:
         self.cache = cache
 
     def _from_data(self, payload: dt.RoleData):
-        self._name = payload.get("name")
+        self._name = payload["name"]
         self._id = payload["id"]
         self._color = payload["color"]
         self._hoist = payload["hoist"]

@@ -3,7 +3,7 @@ import json
 import logging
 import sys
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, List, Optional, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Union, Dict
 from urllib.parse import quote as urlquote
 
 import aiohttp
@@ -242,6 +242,9 @@ class HTTPClient:
     def get_guild_channels(self, guild_id: int):
         return self.request(Route("GET", f"/guilds/{guild_id}/channels"))
 
+    def get_guild_roles(self, guild_id: int):
+        return self.request(Route("GET", f"/guilds/{guild_id}/roles"))
+
     async def read_from_cdn(self, url: str) -> Optional[bytes]:
         async with self._session.get(url) as resp:
             if 200 <= resp.status < 300:
@@ -361,6 +364,17 @@ class HTTPClient:
     def get_guild(self, guild_id: int):
         return self.request(Route("GET", f"/guilds/{guild_id}"))
 
+    async def edit_guild(self, guild_id: int, *, name: Optional[str] = None) -> Dict[str, Any]:
+        payload = {}
+
+        if name is not None:
+            payload["name"] = name
+
+        resp = await self.request(Route("PATCH", f"/guilds/{guild_id}"), json_params=payload)
+
+        return resp
+
+
     async def get_channel(self, channel_id: int):
         guild = await self.request(Route("GET", f"/channels/{channel_id}"))
         return guild
@@ -374,7 +388,9 @@ class HTTPClient:
     def ban(self, guild_id: int, user_id: int, reason: str):
         route = Route("PUT", f"/guilds/{guild_id}/bans/{user_id}")
 
-        return self.request(route, reason=reason)
+        req = self.request(route, reason=reason)
+
+        return req
 
     async def close(self):
         if self._session:

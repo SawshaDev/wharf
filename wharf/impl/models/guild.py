@@ -19,18 +19,16 @@ class Guild:
         self.cache = cache
         self._members: Dict[int, Member] = {}
         self._channels: Dict[int, TextChannel] = {}
+        self._roles: Dict[int, Role] = {}
 
     def _from_data(self, guild: dt.GuildData):
         self.name = guild.get("name")
-        self.id: int = guild.get("id")
+        self.id: int = int(guild.get("id"))
         self.icon_hash = guild.get("icon")
         self.banner_hash = guild.get("banner")
 
     async def fetch_member(self, member_id: int):
         return Member(await self.cache.http.get_member(member_id, self.id))
-
-    def get_member(self, member_id: int):
-        return self.cache.get_member(self.id, member_id)
 
     async def ban(
         self,
@@ -39,6 +37,12 @@ class Guild:
         reason: str,
     ):
         await self.cache.http.ban(self.id, user_id, reason)
+
+    async def edit(self, name: Optional[str] = None):
+        data =  await self.cache.http.edit_guild(self.id, name=name)
+
+        return Guild(data, self.cache)
+
 
     async def create_role(self, name: str, *, reason: str = None) -> Role:
         payload = await self.cache.http.create_role(self.id, name=name, reason=reason)
@@ -62,11 +66,17 @@ class Guild:
 
         self._channels[channel.id] = channel
 
+    def _add_role(self, role: Role):
+        self._roles[role.id] = role
+ 
     def _remove_member(self, member_id: int):
         self._members.pop(member_id)
 
     def _remove_channel(self, channel_id: int):
         self._channels.pop(channel_id)
+
+    def _remove_role(self, role_id: int):
+        self._roles.pop(role_id)
 
     @property
     def members(self) -> List[Member]:
@@ -81,6 +91,7 @@ class Guild:
         A list of all the channels this server has.
         """
         return list(self._channels.values())
+
 
     @property
     def icon(self) -> Optional[Asset]:

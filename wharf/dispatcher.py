@@ -71,6 +71,7 @@ class Dispatcher:
 
         _log.debug("Subscribed to %r", event_name)
 
+
     def get_event(self, event_name: str):
         return self.events.get(event_name)
 

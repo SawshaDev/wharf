@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, List
 
 import discord_typings as dt
 
@@ -19,7 +19,6 @@ class Member:
         self._from_data(payload)
 
         self._roles = []
-        self._get_roles()
 
     def __str__(self) -> str:
         return f"{self.name}#{self.discriminator}"
@@ -31,12 +30,11 @@ class Member:
         self.id = int(payload["user"]["id"])
         self.name = payload["user"]["username"]
         self._avatar = payload["user"].get("avatar")
+    
 
-    def _get_roles(self):
-        if self._payload.get("roles"):
-            for role in self._payload.get("roles"):
-                self._roles.append(Role(role, self.cache))
 
+
+ 
     @property
     def avatar(self) -> Optional[Asset]:
         if self._avatar is not None:

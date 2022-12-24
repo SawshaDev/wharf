@@ -41,23 +41,23 @@ class Gateway:
         heartbeat_interval: int
         ws: ClientWebSocketResponse
         _resume_url: str
+        _last_sequence: int
+
 
     def __init__(self, dispatcher: Dispatcher, cache: Cache):
         self.cache = cache
         self.token = self.cache.http._token
         self.intents = self.cache.http._intents
         self.api_version = 10
-        self.gw_url: str = f"wss://gateway.discord.gg/?v={self.api_version}&encoding=json&compress=zlib-stream"
+        self.gateway_url: str = f"wss://gateway.discord.gg/?v={self.api_version}&encoding=json&compress=zlib-stream"
         self._first_heartbeat = True
         self.dispatcher = dispatcher
         self._decompresser = zlib.decompressobj()
         self.loop = None
-        self.session: Optional[ClientSession] = None
         self.ws: Optional[ClientWebSocketResponse] = None
         self._last_sequence: Optional[int] = None
-        self._cached_guilds: bool = False
 
-    def _decompress_msg(self, msg: bytes):
+    def _decompress_msg(self, msg: Union[bytes, str]):
         ZLIB_SUFFIX = b"\x00\x00\xff\xff"
 
         out_str: str = ""
@@ -135,9 +135,9 @@ class Gateway:
 
         await self.ws.send_json(payload)
 
-    async def connect(self, *, url: Optional[str] = None, reconnect: Optional[bool] = False):
 
-        self.ws = await self.cache.http._session.ws_connect(url or self.gw_url)
+    async def connect(self, *, url: Optional[str] = None, reconnect: Optional[bool] = False):
+        self.ws = await self.cache.http._session.ws_connect(url or self.gateway_url)
 
         _log.info("Connected to gateway")
 
@@ -154,7 +154,7 @@ class Gateway:
                 data: Dict[Any, str] = json.loads(data)
 
             if data.get("s"):
-                self._last_sequence = data["s"]
+                self._last_sequence = data.get("s", 0)
 
 
             if data["op"] == OPCodes.hello:
@@ -166,7 +166,6 @@ class Gateway:
                     await self.send(self.resume_payload)
                 else:
                     await self.send(self.identify_payload)
-
 
             elif data["op"] == OPCodes.heartbeat:
                 await self.send(self.ping_payload)
@@ -195,7 +194,6 @@ class Gateway:
                     self.cache.remove_channel(event_data["guild_id"], event_data["id"])
 
                 else:
-
                     if data["t"].lower() not in self.dispatcher.events.keys():
                         continue
 
@@ -211,9 +209,9 @@ class Gateway:
                 _log.info("Reconnected! :)")
 
             elif data["op"] == OPCodes.invalid_session:
-                _log.info("Invalid session! We are not reconnecting.")
-                await self.close(code=4001, resume=False) # If we're getting an invalid session, do NOT try to reconnect
-                break                                     # We get invalid session for various reasons: https://discord.com/developers/docs/topics/gateway-events#invalid-session
+                _log.info("Invalid session! We will not be reconnecting.")      # If we're getting an invalid session, do NOT try to reconnect
+                await self.close(code=4001, resume=False)                       # We get invalid session for various reasons: https://discord.com/developers/docs/topics/gateway-events#invalid-session
+                break                                  
 
             elif msg.type == WSMsgType.CLOSE:
                 raise WebsocketClosed(msg.data, msg.extra)

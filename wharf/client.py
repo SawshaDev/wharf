@@ -35,14 +35,10 @@ class Client:
         self.http.login(self.token, self.intents.value)
 
         await self.pre_ready()
-
+    
     async def connect(self):
-        try:
-            self.ws = Gateway(self.dispatcher, self.cache)
-            await self.ws.connect()
-        except Exception as e:
-            print(e)
-            await self.ws.connect(url=self.ws._resume_url, reconnect=True)
+        self.ws = Gateway(self.dispatcher, self.cache)
+        await self.ws.connect()
 
     def listen(self, name: str):
         def inner(func):
@@ -70,6 +66,7 @@ class Client:
     async def fetch_guild(self, guild_id: int):
 
         return Guild(await self.http.get_guild(guild_id), self.cache)
+
 
     async def register_app_command(self, command: InteractionCommand):
         await self.http.register_app_commands(command)

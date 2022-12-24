@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 import discord_typings as dt
 
-from ..impl import TextChannel, Guild, Member, User
+from ..impl import TextChannel, Guild, Member, User, Role
 
 if TYPE_CHECKING:
     from ..http import HTTPClient
@@ -17,10 +17,14 @@ _log = getLogger(__name__)
 class Cache:
     def __init__(self, http: HTTPClient):
         self.http = http
-        self.guilds: Dict[int, Guild] = {}
-        self.members: Dict[dt.Snowflake, Dict[str, Member]] = {}
-        self.channels: Dict[dt.Snowflake, Dict[str, TextChannel]] = {}
         self.users: dict[dt.Snowflake, User] = {}
+
+        # Guild Cache
+        self.guilds: Dict[int, Guild] = {}
+        self.members: Dict[int, Dict[str, Member]] = {}
+        self.channels: Dict[int, Dict[str, TextChannel]] = {}
+        self.roles: Dict[int, Dict[str, Role]] = {}
+
 
     def remove_guild(self, guild_id: int) -> None:
         guild = self.get_guild(guild_id)
@@ -30,6 +34,7 @@ class Cache:
         self.channels.pop(guild_id)
         self.members.pop(guild_id)
         self.guilds.pop(guild_id)
+        self.roles.pop(guild_id)
 
 
     def remove_channel(self, guild_id: int, channel_id: int) -> Guild:
@@ -49,6 +54,16 @@ class Cache:
 
         return guild
 
+    def remove_role(self, guild_id: int, role_id: int):
+        if guild_id not in self.roles or role_id not in self.roles.values():
+            raise ValueError("Role or Guild does not appear there!")
+
+        guild = self.get_guild(guild_id)
+        guild._remove_role(role_id)
+        self.roles[guild_id].pop(role_id)
+
+        return guild
+
     def get_user(self, user_id: dt.Snowflake):
         return self.users.get(user_id)
 
@@ -61,6 +76,7 @@ class Cache:
         user = User(payload, self)
         self.users[user.id] = user
         return user
+
 
     def get_guild(self, guild_id: int):
         return self.guilds.get(guild_id)
@@ -95,6 +111,25 @@ class Cache:
         guild._add_channel(channel)
         return channel
 
+    def add_role(self, guild_id: int, payload: dt.RoleData):
+        if guild_id not in self.roles:
+            self.roles[guild_id] = {}
+
+        role = self.roles[guild_id].get(payload["id"])
+
+        if role:
+            return role
+
+        role = Role(payload, self)
+        guild = self.get_guild(guild_id)
+        self.roles[guild_id][role.id] = role
+        guild._add_role(role)
+
+        return role
+
+    def get_role(self, guild_id: int, role_id: int) -> Role:
+        return self.roles.get(guild_id).get(role_id)
+
     def get_member(self, guild_id: str, member_id: int) -> Member:
         return self.members.get(guild_id).get(member_id)
 
@@ -117,9 +152,13 @@ class Cache:
         guild = self.get_guild(guild_id)
         members = await self.http.get_guild_members(guild_id)
         channels = await self.http.get_guild_channels(guild_id)
+        roles = await self.http.get_guild_roles(guild_id)
 
         for channel in channels:
             self.add_channel(guild_id, channel)
+
+        for role in roles:
+            self.add_role(guild_id, role)
 
         for member in members:
             self.add_user(member["user"])
