@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, List
+from typing import TYPE_CHECKING, List, Optional
 
 import discord_typings as dt
 
 from ...asset import Asset
-
 from .role import Role
 
 if TYPE_CHECKING:
@@ -30,11 +29,7 @@ class Member:
         self.id = int(payload["user"]["id"])
         self.name = payload["user"]["username"]
         self._avatar = payload["user"].get("avatar")
-    
 
-
-
- 
     @property
     def avatar(self) -> Optional[Asset]:
         if self._avatar is not None:

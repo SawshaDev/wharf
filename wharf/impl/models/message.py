@@ -4,9 +4,8 @@ from typing import TYPE_CHECKING, Dict, Optional
 
 import discord_typings as dt
 
-from .user import User
-
 from .guild import Guild
+from .user import User
 
 if TYPE_CHECKING:
     from ..cache import Cache
@@ -21,10 +20,10 @@ class Message:
         self._content = message.get("content")
         self._author_id = message["author"]
         self._channel_id = message["channel_id"]
-        
+
         if message.get("guild_id") is not None:
             self._guild_id = int(message.get("guild_id"))
-        
+
     @property
     def guild(self) -> Optional[Guild]:
         return self.cache.get_guild(self._guild_id)
@@ -32,9 +31,9 @@ class Message:
     @property
     def content(self) -> str:
         return self._content
-    
+
     @property
-    def author(self) -> User: 
+    def author(self) -> User:
         return self.cache.get_user(self._author_id)
 
     @property

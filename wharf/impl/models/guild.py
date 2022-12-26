@@ -39,10 +39,9 @@ class Guild:
         await self.cache.http.ban(self.id, user_id, reason)
 
     async def edit(self, name: Optional[str] = None):
-        data =  await self.cache.http.edit_guild(self.id, name=name)
+        data = await self.cache.http.edit_guild(self.id, name=name)
 
         return Guild(data, self.cache)
-
 
     async def create_role(self, name: str, *, reason: str = None) -> Role:
         payload = await self.cache.http.create_role(self.id, name=name, reason=reason)
@@ -68,7 +67,7 @@ class Guild:
 
     def _add_role(self, role: Role):
         self._roles[role.id] = role
- 
+
     def _remove_member(self, member_id: int):
         self._members.pop(member_id)
 
@@ -91,7 +90,6 @@ class Guild:
         A list of all the channels this server has.
         """
         return list(self._channels.values())
-
 
     @property
     def icon(self) -> Optional[Asset]:

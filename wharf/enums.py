@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class Status(Enum):
     online = "online"
     offline = "offline"

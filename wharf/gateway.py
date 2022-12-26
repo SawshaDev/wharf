@@ -7,7 +7,7 @@ import logging
 import random
 import zlib
 from sys import platform as _os
-from typing import TYPE_CHECKING, Any, List, Optional, Union, Dict
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 from aiohttp import ClientSession, ClientWebSocketResponse, WSMsgType
 
@@ -42,7 +42,6 @@ class Gateway:
         ws: ClientWebSocketResponse
         _resume_url: str
         _last_sequence: int
-
 
     def __init__(self, dispatcher: Dispatcher, cache: Cache):
         self.cache = cache
@@ -90,7 +89,7 @@ class Gateway:
                 "token": self.token,
                 "seq": self._last_sequence or 0,
                 "session_id": self.session_id,
-            }
+            },
         }
 
     @property
@@ -103,7 +102,6 @@ class Gateway:
             payload["d"] = self._last_sequence
 
         return payload
-
 
     async def keep_heartbeat(self):
         jitters = self.heartbeat_interval
@@ -135,8 +133,9 @@ class Gateway:
 
         await self.ws.send_json(payload)
 
-
-    async def connect(self, *, url: Optional[str] = None, reconnect: Optional[bool] = False):
+    async def connect(
+        self, *, url: Optional[str] = None, reconnect: Optional[bool] = False
+    ):
         self.ws = await self.cache.http._session.ws_connect(url or self.gateway_url)
 
         _log.info("Connected to gateway")
@@ -156,7 +155,6 @@ class Gateway:
             if data.get("s"):
                 self._last_sequence = data.get("s", 0)
 
-
             if data["op"] == OPCodes.hello:
                 self.heartbeat_interval = data["d"]["heartbeat_interval"]
 
@@ -173,25 +171,31 @@ class Gateway:
             elif data["op"] == OPCodes.dispatch:
                 event_data = data["d"]
 
+                _log.info(data["t"])
+
                 if data["t"] == "READY":
                     self.session_id = event_data["session_id"]
                     self._resume_url = event_data["resume_gateway_url"]
 
-           
                 # As messy as this all is, this probably is best here.
                 if data["t"] == "GUILD_CREATE":
                     asyncio.create_task(self.cache.handle_guild_caching(event_data))
 
+                elif data["t"] == "GUILD_MEMBER_ADD":
+                    await self.cache.add_member(int(event_data["guild_id"]), event_data)
+
                 elif data["t"] == "GUILD_DELETE":
-                    self.cache.remove_guild(event_data["id"])
+                    self.cache.remove_guild(int(event_data["id"]))
 
                 elif data["t"] == "GUILD_MEMBER_REMOVE":
                     self.cache.remove_member(
-                        event_data["guild_id"], event_data["user"]["id"]
+                        int(event_data["guild_id"]), int(event_data["user"]["id"])
                     )
 
                 elif data["t"] == "CHANNEL_DELETE":
-                    self.cache.remove_channel(event_data["guild_id"], event_data["id"])
+                    self.cache.remove_channel(
+                        int(event_data["guild_id"]), int(event_data["id"])
+                    )
 
                 else:
                     if data["t"].lower() not in self.dispatcher.events.keys():
@@ -209,9 +213,13 @@ class Gateway:
                 _log.info("Reconnected! :)")
 
             elif data["op"] == OPCodes.invalid_session:
-                _log.info("Invalid session! We will not be reconnecting.")      # If we're getting an invalid session, do NOT try to reconnect
-                await self.close(code=4001, resume=False)                       # We get invalid session for various reasons: https://discord.com/developers/docs/topics/gateway-events#invalid-session
-                break                                  
+                _log.info(
+                    "Invalid session! We will not be reconnecting."
+                )  # If we're getting an invalid session, do NOT try to reconnect
+                await self.close(
+                    code=4001, resume=False
+                )  # We get invalid session for various reasons: https://discord.com/developers/docs/topics/gateway-events#invalid-session
+                break
 
             elif msg.type == WSMsgType.CLOSE:
                 raise WebsocketClosed(msg.data, msg.extra)

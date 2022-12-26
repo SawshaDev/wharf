@@ -3,7 +3,7 @@ import json
 import logging
 import sys
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, List, Optional, Union, Dict
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 from urllib.parse import quote as urlquote
 
 import aiohttp
@@ -256,7 +256,7 @@ class HTTPClient:
         self,
         id: int,
         token: str,
-        type: int, 
+        type: int,
         *,
         content: Optional[str] = None,
         embed: Optional[Embed] = None,
@@ -264,11 +264,11 @@ class HTTPClient:
         file: Optional[File] = None,
     ):
         """Responds to an interaction
-    
+
         Parameters
         -----------
         id: :class:`int`
-            ID of the received interaction   
+            ID of the received interaction
         token: :class:`str`
             Token of the received interaction
         type: :class:`int`
@@ -282,7 +282,6 @@ class HTTPClient:
         file: Optional[:class:`wharf.File`]
             File that should or should not be sent
         """
-
 
         payload = {}
 
@@ -364,16 +363,19 @@ class HTTPClient:
     def get_guild(self, guild_id: int):
         return self.request(Route("GET", f"/guilds/{guild_id}"))
 
-    async def edit_guild(self, guild_id: int, *, name: Optional[str] = None) -> Dict[str, Any]:
+    async def edit_guild(
+        self, guild_id: int, *, name: Optional[str] = None
+    ) -> Dict[str, Any]:
         payload = {}
 
         if name is not None:
             payload["name"] = name
 
-        resp = await self.request(Route("PATCH", f"/guilds/{guild_id}"), json_params=payload)
+        resp = await self.request(
+            Route("PATCH", f"/guilds/{guild_id}"), json_params=payload
+        )
 
         return resp
-
 
     async def get_channel(self, channel_id: int):
         guild = await self.request(Route("GET", f"/channels/{channel_id}"))

@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-
-from typing import TYPE_CHECKING, List, Optional, Dict, Any
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import discord_typings as dt
 
-from ...enums import MessageFlags, InteractionOptionType
+from ...enums import InteractionOptionType, MessageFlags
 from ...file import File
 
 if TYPE_CHECKING:
     from ..cache import Cache
     from ..models import Embed
-
 
 
 class InteractionOption:
@@ -55,6 +53,7 @@ class Interaction:
             self._user = self._member.get("user")
         else:
             self._user = self.payload.get("user")
+
     @property
     def user(self):
         return self.cache.get_user(self._user["id"])
@@ -75,11 +74,11 @@ class Interaction:
         flags: Optional[MessageFlags] = None,
         file: Optional[File] = None,
         components: Optional[List[Dict[Any, Any]]] = None,
-        type: int = 4
+        type: int = 4,
     ) -> None:
         """
         Replies to a discord interaction
-    
+
         Parameters
         -----------
         content: Optional[:class:`str`]
@@ -95,9 +94,15 @@ class Interaction:
             https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type
         """
 
-
         await self.cache.http.interaction_respond(
-           self.id, self.token, type, content=content, embed=embed, flags=flags,  file=file, components=components
+            self.id,
+            self.token,
+            type,
+            content=content,
+            embed=embed,
+            flags=flags,
+            file=file,
+            components=components,
         )
 
     def _make_options(self):

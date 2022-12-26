@@ -33,6 +33,8 @@ class Dispatcher:
         self.cache = cache
 
     def filter_events(self, event_type: str, event_data):
+        print(event_type)
+
         if event_data is None:
             raise ValueError("event data cannot be None")
 
@@ -59,18 +61,18 @@ class Dispatcher:
 
         self.events[event_name].append(func)
 
-        _log.debug("Added callback for %d", event_name)
+        _log.debug("Added callback for %r", event_name)
 
     def add_event(self, event_name: str):
         self.events[event_name] = []
 
-        _log.debug("Added event %d", event_name)
+        _log.debug("Added event %r", event_name)
 
     def subscribe(self, event_name: str, func: CoroFunc):
-        self.events[event_name] = [func]
+        self.add_event(event_name)
+        self.add_callback(event_name, func)
 
         _log.debug("Subscribed to %r", event_name)
-
 
     def get_event(self, event_name: str):
         return self.events.get(event_name)

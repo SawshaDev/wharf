@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 import discord_typings as dt
 
-from ..impl import TextChannel, Guild, Member, User, Role
+from ..impl import Guild, Member, Role, TextChannel, User
 
 if TYPE_CHECKING:
     from ..http import HTTPClient
@@ -25,7 +25,6 @@ class Cache:
         self.channels: Dict[int, Dict[str, TextChannel]] = {}
         self.roles: Dict[int, Dict[str, Role]] = {}
 
-
     def remove_guild(self, guild_id: int) -> None:
         guild = self.get_guild(guild_id)
 
@@ -36,7 +35,6 @@ class Cache:
         self.guilds.pop(guild_id)
         self.roles.pop(guild_id)
 
-
     def remove_channel(self, guild_id: int, channel_id: int) -> Guild:
         guild = self.get_guild(guild_id)
         guild._remove_channel(channel_id)
@@ -45,8 +43,7 @@ class Cache:
         return guild
 
     def remove_member(self, guild_id: int, member_id: int) -> Guild:
-        if guild_id not in self.members or member_id not in self.members.values():
-            raise ValueError("Member does not appear there!")
+        print(f"{self.members[guild_id][member_id]}")
 
         guild = self.get_guild(guild_id)
         guild._remove_member(member_id)
@@ -76,7 +73,6 @@ class Cache:
         user = User(payload, self)
         self.users[user.id] = user
         return user
-
 
     def get_guild(self, guild_id: int):
         return self.guilds.get(guild_id)

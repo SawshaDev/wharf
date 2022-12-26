@@ -4,13 +4,13 @@ from typing import List
 from .activities import Activity
 from .dispatcher import CoroFunc, Dispatcher
 from .enums import Status
+from .errors import GatewayReconnect
 from .file import File
 from .gateway import Gateway
 from .http import HTTPClient
-from .impl import check_channel_type, Guild, InteractionCommand, User
+from .impl import Guild, InteractionCommand, User, check_channel_type
 from .impl.cache import Cache
 from .intents import Intents
-from .errors import GatewayReconnect
 
 
 class Client:
@@ -35,7 +35,7 @@ class Client:
         self.http.login(self.token, self.intents.value)
 
         await self.pre_ready()
-    
+
     async def connect(self):
         self.ws = Gateway(self.dispatcher, self.cache)
         await self.ws.connect()
@@ -66,7 +66,6 @@ class Client:
     async def fetch_guild(self, guild_id: int):
 
         return Guild(await self.http.get_guild(guild_id), self.cache)
-
 
     async def register_app_command(self, command: InteractionCommand):
         await self.http.register_app_commands(command)
