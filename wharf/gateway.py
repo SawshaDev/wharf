@@ -117,7 +117,7 @@ class Gateway:
         await self.ws.send_json(data)
         _log.info("Sent json to the gateway successfully")
 
-    async def _change_precense(self, *, status: str, activity: Activity = None):
+    async def _change_presence(self, *, status: str, activity: Activity = None):
         activities = []
         activities.append(activity.to_dict())
 
