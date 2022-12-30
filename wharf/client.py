@@ -13,7 +13,7 @@ from .impl.cache import Cache
 from .intents import Intents
 
 
-class Client:
+class Bot:
     def __init__(self, *, token: str, intents: Intents):
         self.intents = intents
         self.token = token

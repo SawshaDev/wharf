@@ -1,19 +1,19 @@
 from __future__ import annotations
 
 import asyncio
-import datetime
 import json
 import logging
 import random
+import time
 import zlib
 from sys import platform as _os
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
-from aiohttp import ClientSession, ClientWebSocketResponse, WSMsgType
+from aiohttp import ClientWebSocketResponse, WSMsgType
 
 from .activities import Activity
 from .dispatcher import Dispatcher
-from .errors import GatewayReconnect, WebsocketClosed
+from .errors import WebsocketClosed
 
 if TYPE_CHECKING:
     from .impl.cache import Cache
@@ -155,6 +155,8 @@ class Gateway:
             if data.get("s"):
                 self._last_sequence = data.get("s", 0)
 
+            _log.info(data["op"])
+
             if data["op"] == OPCodes.hello:
                 self.heartbeat_interval = data["d"]["heartbeat_interval"]
 
@@ -165,8 +167,11 @@ class Gateway:
                 else:
                     await self.send(self.identify_payload)
 
+                self._last_send = time.perf_counter()
+
             elif data["op"] == OPCodes.heartbeat:
                 await self.send(self.ping_payload)
+                self._last_send = time.perf_counter()
 
             elif data["op"] == OPCodes.dispatch:
                 event_data = data["d"]
@@ -204,21 +209,21 @@ class Gateway:
                     self.dispatcher.dispatch(data["t"].lower(), event_data)
 
             elif data["op"] == OPCodes.heartbeat_ack:
-                self._last_heartbeat_ack = datetime.datetime.now()
+                self._last_heartbeat_ack = time.perf_counter()
+                self.latency = self._last_heartbeat_ack - self._last_send
 
             elif data["op"] == OPCodes.resume:
                 await self.close(code=4000, resume=True)
 
             elif data["op"] == OPCodes.reconnect:
                 _log.info("Reconnected! :)")
+                await self.close(code=4000, resume=True)
 
             elif data["op"] == OPCodes.invalid_session:
-                _log.info(
-                    "Invalid session! We will not be reconnecting."
-                )  # If we're getting an invalid session, do NOT try to reconnect
-                await self.close(
-                    code=4001, resume=False
-                )  # We get invalid session for various reasons: https://discord.com/developers/docs/topics/gateway-events#invalid-session
+                # If we're getting an invalid session, do NOT try to reconnect
+                # We get invalid session for various reasons (https://discord.com/developers/docs/topics/gateway-events#invalid-session), most of the time these are fatal.
+                _log.info("Invalid session! We will not be reconnecting.")
+                await self.close(code=4001, resume=False)
                 break
 
             elif msg.type == WSMsgType.CLOSE:
@@ -230,6 +235,9 @@ class Gateway:
 
         if not self.is_closed:
             await self.ws.close(code=code)
+
+            if resume:
+                await self.connect(url=self._resume_url, reconnect=True)
 
     @property
     def is_closed(self):
