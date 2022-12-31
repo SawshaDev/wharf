@@ -105,8 +105,6 @@ class Bot:
 
         self.extensions.remove(ext)
 
-        
-
     def fetch_plugin(self, name: str) -> Optional[Plugin]:
         return self._plugins.get(name)
 
@@ -116,6 +114,8 @@ class Bot:
         for event_name, listeners in plugin._listeners.items():
             for listener in listeners:
                 self.subscribe(event_name, listener)
+
+        self._plugins[plugin.name] = plugin
 
     def remove_plugin(self, plugin: Union[str, Plugin]):
         if isinstance(plugin, str):
@@ -156,6 +156,11 @@ class Bot:
             asyncio.run(self.close())
 
     async def close(self):
+        for ext in self.extensions:
+            ext.remove(self)
+
+        for plugin in self._plugins.values():
+            self.remove_plugin(plugin)
 
         if self.gateway is not None:
             await self.gateway.close()
