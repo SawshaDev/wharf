@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import asyncio
-from typing import List, Optional, Protocol, Dict
+import importlib
+import sys
+from typing import List, Optional, Protocol, Dict, Union, cast
 
 from .activities import Activity
 from .dispatcher import CoroFunc, Dispatcher
@@ -40,7 +42,7 @@ class Bot:
         self.dispatcher = Dispatcher(self.cache)
 
         # ws gets filled in later on
-        self.ws: Gateway = None  # type: ignore
+        self.gatewau: Gateway = None  # type: ignore
 
         self.extensions: List[ExtProtocol] = []
 
@@ -58,8 +60,8 @@ class Bot:
         await self.pre_ready()
 
     async def connect(self):
-        self.ws = Gateway(self.dispatcher, self.cache)
-        await self.ws.connect()
+        self.gateway = Gateway(self.dispatcher, self.cache)
+        await self.gateway.connect()
 
     def listen(self, name: str):
         def inner(func):
@@ -73,6 +75,38 @@ class Bot:
     def subscribe(self, event: str, func: CoroFunc):
         self.dispatcher.subscribe(event, func)
 
+    def load_extension(self, extension: str):
+        if extension in self.extensions:
+            raise ValueError("Extension already loaded!")
+        
+        module = importlib.import_module(extension)
+
+        ext = cast(ExtProtocol, module)
+        
+        if hasattr(ext, "load") is False:
+            raise ValueError("Extension is missing load function. Please fix this!")
+        
+        ext.load(self)
+
+        self.extensions.append(ext)
+
+    def remove_extension(self, extension: str):
+        if extension in self.extensions:
+            raise ValueError("Extension already loaded!")
+        
+        module = importlib.import_module(extension)
+
+        ext = cast(ExtProtocol, module)
+        
+        if hasattr(ext, "load") is False:
+            raise ValueError("Extension is missing load function. Please fix this!")
+        
+        ext.remove(self)
+
+        self.extensions.remove(ext)
+
+        
+
     def fetch_plugin(self, name: str) -> Optional[Plugin]:
         return self._plugins.get(name)
 
@@ -83,10 +117,17 @@ class Bot:
             for listener in listeners:
                 self.subscribe(event_name, listener)
 
+    def remove_plugin(self, plugin: Union[str, Plugin]):
+        if isinstance(plugin, str):
+            plugin = self.fetch_plugin(plugin)
 
+        if plugin is None:
+            return
+        
+        self._plugins.pop(plugin.name)
 
     async def change_presence(self, *, status: Status, activity: Activity = None):
-        await self.ws._change_presence(status=status.value, activity=activity)
+        await self.gateway._change_presence(status=status.value, activity=activity)
 
     async def fetch_user(self, user_id: int):
         return User(await self.http.get_user(user_id), self.cache)
@@ -116,7 +157,7 @@ class Bot:
 
     async def close(self):
 
-        if self.ws is not None:
-            await self.ws.close()
+        if self.gateway is not None:
+            await self.gateway.close()
 
         await self.http.close()
