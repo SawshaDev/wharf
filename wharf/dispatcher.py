@@ -14,6 +14,8 @@ from typing import (
     TypeVar,
 )
 
+from collections import defaultdict
+
 from .impl import Interaction, Member, Message
 
 if TYPE_CHECKING:
@@ -29,7 +31,7 @@ _log = logging.getLogger(__name__)
 
 class Dispatcher:
     def __init__(self, cache: Cache):
-        self.events: Dict[str, List[CoroFunc]] = {}
+        self.events: Dict[str, List[CoroFunc]] = defaultdict(list)
         self.cache = cache
 
     def filter_events(self, event_type: str, event_data):
@@ -56,20 +58,11 @@ class Dispatcher:
         return event_data
 
     def add_callback(self, event_name: str, func: CoroFunc):
-        if event_name not in self.events:
-            raise ValueError("Event not in any known events!")
-
         self.events[event_name].append(func)
 
         _log.debug("Added callback for %r", event_name)
 
-    def add_event(self, event_name: str):
-        self.events[event_name] = []
-
-        _log.debug("Added event %r", event_name)
-
     def subscribe(self, event_name: str, func: CoroFunc):
-        self.add_event(event_name)
         self.add_callback(event_name, func)
 
         _log.debug("Subscribed to %r", event_name)

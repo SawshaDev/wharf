@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import asyncio
-from typing import List, Optional
+from typing import List, Optional, Protocol, Dict
 
 from .activities import Activity
 from .dispatcher import CoroFunc, Dispatcher
@@ -12,6 +14,14 @@ from .impl import Guild, InteractionCommand, User, check_channel_type
 from .impl.cache import Cache
 from .intents import Intents
 
+from .plugin import Plugin
+
+class ExtProtocol(Protocol):
+    def load(self, bot: Bot):
+        ...
+
+    def remove(self, bot: Bot):
+        ...
 
 class Bot:
     def __init__(
@@ -31,6 +41,10 @@ class Bot:
 
         # ws gets filled in later on
         self.ws: Gateway = None  # type: ignore
+
+        self.extensions: List[ExtProtocol] = []
+
+        self._plugins: Dict[str, Plugin] =  {}
 
     async def pre_ready(self):
         """
@@ -59,8 +73,20 @@ class Bot:
     def subscribe(self, event: str, func: CoroFunc):
         self.dispatcher.subscribe(event, func)
 
+    def fetch_plugin(self, name: str) -> Optional[Plugin]:
+        return self._plugins.get(name)
+
+    def add_plugin(self, plugin: Plugin):
+        plugin.bot = self
+
+        for event_name, listeners in plugin._listeners.items():
+            for listener in listeners:
+                self.subscribe(event_name, listener)
+
+
+
     async def change_presence(self, *, status: Status, activity: Activity = None):
-        await self.ws._change_precense(status=status.value, activity=activity)
+        await self.ws._change_presence(status=status.value, activity=activity)
 
     async def fetch_user(self, user_id: int):
         return User(await self.http.get_user(user_id), self.cache)

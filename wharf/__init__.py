@@ -12,3 +12,4 @@ from .gateway import *
 from .http import *
 from .impl import *
 from .intents import *
+from .plugin import *
