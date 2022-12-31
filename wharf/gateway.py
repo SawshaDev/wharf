@@ -15,6 +15,8 @@ from .activities import Activity
 from .dispatcher import Dispatcher
 from .errors import WebsocketClosed
 
+from .types.gateway import GatewayData
+
 if TYPE_CHECKING:
     from .impl.cache import Cache
 
@@ -150,7 +152,7 @@ class Gateway:
                 elif msg.type == WSMsgType.TEXT:
                     data = msg.data
 
-                data: Dict[Any, str] = json.loads(data)
+                data: GatewayData = json.loads(data)
 
             if data.get("s"):
                 self._last_sequence = data.get("s", 0)
@@ -158,6 +160,8 @@ class Gateway:
             _log.info(data["op"])
 
             if data["op"] == OPCodes.hello:
+                _log.info(data)
+
                 self.heartbeat_interval = data["d"]["heartbeat_interval"]
 
                 asyncio.create_task(self.keep_heartbeat())
@@ -184,7 +188,7 @@ class Gateway:
 
                 # As messy as this all is, this probably is best here.
                 if data["t"] == "GUILD_CREATE":
-                    asyncio.create_task(self.cache.handle_guild_caching(event_data))
+                    asyncio.create_task(self.cache._handle_guild_caching(event_data))
 
                 elif data["t"] == "GUILD_MEMBER_ADD":
                     await self.cache.add_member(int(event_data["guild_id"]), event_data)

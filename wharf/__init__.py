@@ -4,7 +4,7 @@ __version__ = "1.0.0"
 __license__ = "MIT"
 __copyright__ = "Copyright (c) 2022 SawshaDev"
 
-from .client import *
+from .bot import *
 from .enums import *
 from .errors import *
 from .file import *

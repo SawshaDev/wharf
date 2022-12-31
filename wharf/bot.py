@@ -1,5 +1,5 @@
 import asyncio
-from typing import List
+from typing import List, Optional
 
 from .activities import Activity
 from .dispatcher import CoroFunc, Dispatcher
@@ -14,12 +14,19 @@ from .intents import Intents
 
 
 class Bot:
-    def __init__(self, *, token: str, intents: Intents):
+    def __init__(
+        self, 
+        *,
+        token: str, 
+        intents: Intents, 
+        cache: Optional[Cache] = Cache
+    ):
         self.intents = intents
         self.token = token
         self._slash_commands = []
         self.http = HTTPClient()
-        self.cache = Cache(self.http)
+        self.cache: Cache = cache(self.http)
+        
         self.dispatcher = Dispatcher(self.cache)
 
         # ws gets filled in later on

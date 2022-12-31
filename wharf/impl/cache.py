@@ -162,7 +162,7 @@ class Cache:
 
         return guild
 
-    async def handle_guild_caching(self, data: dt.GuildData):
+    async def _handle_guild_caching(self, data: dt.GuildData):
         _log.info("Adding guild %s to cache!", data["id"])
         self.add_guild(data)
         _log.info("Populating guild %s's cache", data["id"])

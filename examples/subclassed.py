@@ -4,7 +4,7 @@ import wharf
 
 
 # Now you can actually start subclassing
-class SubclassedClient(wharf.Client):
+class SubclassedClient(wharf.Bot):
     def __init__(
         self, token: str, intents: wharf.Intents
     ):  # Gotta make sure to include an __init__!
