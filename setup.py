@@ -9,7 +9,7 @@ with open("requirements.txt") as f:
 path = Path(__file__).parent / "wharf" / "__init__.py"
 version = re.search(r"\d[.]\d[.]\d", path.read_text())[0]
 
-packages = ["wharf", "wharf.impl", "wharf.impl.models"]
+packages = ["wharf", "wharf.impl", "wharf.impl.models", "wharf.types"]
 
 
 setup(
