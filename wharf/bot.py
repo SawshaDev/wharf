@@ -91,15 +91,15 @@ class Bot:
         self.extensions.append(ext)
 
     def remove_extension(self, extension: str):
-        if extension in self.extensions:
-            raise ValueError("Extension already loaded!")
+        if extension not in self.extensions:
+            raise ValueError("Extension not loaded!")
         
         module = importlib.import_module(extension)
 
         ext = cast(ExtProtocol, module)
         
         if hasattr(ext, "load") is False:
-            raise ValueError("Extension is missing load function. Please fix this!")
+            raise ValueError("Extension is missing remove function.")
         
         ext.remove(self)
 
