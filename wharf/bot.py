@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import importlib
 import sys
-from typing import List, Optional, Protocol, Dict, Union, cast
+from typing import Dict, List, Optional, Protocol, Union, cast
 
 from .activities import Activity
 from .dispatcher import CoroFunc, Dispatcher
@@ -15,8 +15,8 @@ from .http import HTTPClient
 from .impl import Guild, InteractionCommand, User, check_channel_type
 from .impl.cache import Cache
 from .intents import Intents
-
 from .plugin import Plugin
+
 
 class ExtProtocol(Protocol):
     def load(self, bot: Bot):
@@ -25,20 +25,15 @@ class ExtProtocol(Protocol):
     def remove(self, bot: Bot):
         ...
 
+
 class Bot:
-    def __init__(
-        self, 
-        *,
-        token: str, 
-        intents: Intents, 
-        cache: Optional[Cache] = Cache
-    ):
+    def __init__(self, *, token: str, intents: Intents, cache: Optional[Cache] = Cache):
         self.intents = intents
         self.token = token
         self._slash_commands = []
         self.http = HTTPClient()
         self.cache: Cache = cache(self.http)
-        
+
         self.dispatcher = Dispatcher(self.cache)
 
         # ws gets filled in later on
@@ -46,7 +41,7 @@ class Bot:
 
         self.extensions: List[ExtProtocol] = []
 
-        self._plugins: Dict[str, Plugin] =  {}
+        self._plugins: Dict[str, Plugin] = {}
 
     async def pre_ready(self):
         """
@@ -78,14 +73,14 @@ class Bot:
     def load_extension(self, extension: str):
         if extension in self.extensions:
             raise ValueError("Extension already loaded!")
-        
+
         module = importlib.import_module(extension)
 
         ext = cast(ExtProtocol, module)
-        
+
         if hasattr(ext, "load") is False:
             raise ValueError("Extension is missing load function. Please fix this!")
-        
+
         ext.load(self)
 
         self.extensions.append(ext)
@@ -93,14 +88,14 @@ class Bot:
     def remove_extension(self, extension: str):
         if extension not in self.extensions:
             raise ValueError("Extension not loaded!")
-        
+
         module = importlib.import_module(extension)
 
         ext = cast(ExtProtocol, module)
-        
+
         if hasattr(ext, "load") is False:
             raise ValueError("Extension is missing remove function.")
-        
+
         ext.remove(self)
 
         self.extensions.remove(ext)
@@ -123,7 +118,7 @@ class Bot:
 
         if plugin is None:
             return
-        
+
         self._plugins.pop(plugin.name)
 
     async def change_presence(self, *, status: Status, activity: Activity = None):

@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import inspect
 import logging
+from collections import defaultdict
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -13,8 +14,6 @@ from typing import (
     Optional,
     TypeVar,
 )
-
-from collections import defaultdict
 
 from .impl import Interaction, Member, Message
 

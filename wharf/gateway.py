@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 import asyncio
+from typing import TYPE_CHECKING, Optional
 
 from aiohttp import ClientWebSocketResponse, WSMsgType
 
-from typing import TYPE_CHECKING, Optional
-
 if TYPE_CHECKING:
-    from .impl import Cache
     from .dispatcher import Dispatcher
+    from .impl import Cache
 
 
 DEFAULT_API_VERSION = 10
@@ -28,7 +27,7 @@ class OPCodes:
     HEARTBEAT_ACK = 11
 
 
-class Gateway: # This Class is in no way supposed to be used by itself. it should ALWAYS be used with `wharf.Bot`. so seriously, dont :sob:
+class Gateway:  # This Class is in no way supposed to be used by itself. it should ALWAYS be used with `wharf.Bot`. so seriously, dont :sob:
     if TYPE_CHECKING:
         ws: ClientWebSocketResponse
         heartbeat_interval: int
@@ -42,7 +41,3 @@ class Gateway: # This Class is in no way supposed to be used by itself. it shoul
         # Defining token and intents
         self.token = self._cache.http._token
         self.intents = self._cache.http._intents
-
-        
-
-
