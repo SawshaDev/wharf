@@ -17,12 +17,12 @@ class Message:
         self.cache = cache
 
     def _from_data(self, message: Dict[str, str]):
-        self._content = message.get("content")
+        self._content = message["content"]
         self._author_id = message["author"]
         self._channel_id = message["channel_id"]
 
         if message.get("guild_id") is not None:
-            self._guild_id = int(message.get("guild_id"))
+            self._guild_id = int(message.get("guild_id")) # type: ignore
 
     @property
     def guild(self) -> Optional[Guild]:
@@ -33,7 +33,7 @@ class Message:
         return self._content
 
     @property
-    def author(self) -> User:
+    def author(self) -> Optional[User]:
         return self.cache.get_user(self._author_id)
 
     @property

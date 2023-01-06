@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import discord_typings as dt
 
@@ -9,20 +9,21 @@ from .user import User
 
 if TYPE_CHECKING:
     from ..cache import Cache
+    from .guild import Guild
 
 
 class Channel:
-    def __init__(self, payload: dt.ChannelData, cache: Cache):
+    def __init__(self, payload: Dict[str, Any], cache: Cache):
         self.cache = cache
         self._from_data(payload)
 
-    def _from_data(self, payload: dt.ChannelData):
+    def _from_data(self, payload: Dict[str, Any]):
         self._id = payload.get("id")
         self._type = payload.get("type")
 
     @property
     def id(self) -> int:
-        return int(self._id)
+        return int(self._id) # type: ignore
 
     @property
     def type(self) -> ChannelTypes:
@@ -30,21 +31,21 @@ class Channel:
 
 
 class TextChannel(Channel):
-    def __init__(self, payload: dt.TextChannelData, cache: Cache):
+    def __init__(self, payload: Dict[str, Any], cache: Cache):
         super().__init__(payload, cache)
         self._payload = payload
 
     @property
-    def name(self) -> str:
+    def name(self) -> Optional[str]:
         return self._payload.get("name")
 
     @property
-    def guild(self):
-        return self.cache.get_guild(self._payload.get("guild_id"))
+    def guild(self) -> Optional[Guild]:
+        return self.cache.get_guild(self._payload.get("guild_id")) # type: ignore # No idea how to fix.
 
 
 class DMChannel(Channel):
-    def __init__(self, payload: dt.DMChannelData, cache: Cache):
+    def __init__(self, payload: Dict[str, Any], cache: Cache):
         super().__init__(payload, cache)
         self._payload = payload
 

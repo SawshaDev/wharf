@@ -31,18 +31,17 @@ class Bot:
         *,
         token: str, 
         intents: Intents, 
-        cache: Optional[Cache] = Cache
+        cache: Cache = Cache # type: ignore    
     ):
         self.intents = intents
         self.token = token
         self._slash_commands = []
         self.http = HTTPClient()
-        self.cache: Cache = cache(self.http)
-        
+        self.cache: Cache = cache(self.http) # type: ignore        
         self.dispatcher = Dispatcher(self.cache)
 
         # ws gets filled in later on
-        self.gatewau: Gateway = None  # type: ignore
+        self.gateway: Gateway = None  # type: ignore
 
         self.extensions: List[ExtProtocol] = []
 
@@ -61,7 +60,14 @@ class Bot:
 
     async def connect(self):
         self.gateway = Gateway(self.dispatcher, self.cache)
-        await self.gateway.connect()
+        gateway_url: Optional[str] = None
+
+        while True:
+            try:
+                await self.gateway.connect(url=gateway_url)
+            except GatewayReconnect as gr:
+                gateway_url = gr.url
+                
 
     def listen(self, name: str):
         def inner(func):
@@ -117,16 +123,16 @@ class Bot:
 
         self._plugins[plugin.name] = plugin
 
-    def remove_plugin(self, plugin: Union[str, Plugin]):
+    def remove_plugin(self, plugin: Union[str, Plugin]) -> None:
         if isinstance(plugin, str):
-            plugin = self.fetch_plugin(plugin)
+            plugin = self.fetch_plugin(plugin) # type: ignore # Shit crazy?
 
         if plugin is None:
             return
         
-        self._plugins.pop(plugin.name)
-
-    async def change_presence(self, *, status: Status, activity: Activity = None):
+        self._plugins.pop(plugin.name) # type: ignore
+    
+    async def change_presence(self, *, status: Status, activity: Optional[Activity] = None):
         await self.gateway._change_presence(status=status.value, activity=activity)
 
     async def fetch_user(self, user_id: int):
@@ -163,6 +169,6 @@ class Bot:
             self.remove_plugin(plugin)
 
         if self.gateway is not None:
-            await self.gateway.close()
+            await self.gateway.close(resume=False)
 
         await self.http.close()

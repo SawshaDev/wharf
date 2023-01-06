@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Dict, Any
 
 import discord_typings as dt
 
@@ -11,13 +11,13 @@ if TYPE_CHECKING:
 
 
 class User:
-    def __init__(self, payload: dt.UserData, cache: "Cache"):
+    def __init__(self, payload: Dict[str, Any], cache: "Cache"):
         self.payload = payload
         self.cache = cache
 
         self._from_data(payload)
 
-    def _from_data(self, payload: dt.UserData):
+    def _from_data(self, payload: Dict[str, Any]):
         self.name = payload["username"]
         self.id = payload["id"]
         self.discriminator = payload["discriminator"]

@@ -22,11 +22,11 @@ class InteractionOption:
         self._value = payload.get("value")
 
     @property
-    def value(self) -> str:
+    def value(self) -> Optional[str]:
         return self._value
 
     @property
-    def name(self) -> str:
+    def name(self) -> Optional[str]:
         return self._name
 
     def __str__(self):
@@ -37,22 +37,25 @@ class Interaction:
     def __init__(self, cache: Cache, payload: dict):
         self.cache = cache
         self.payload = payload
-        self.id = payload.get("id")
-        self.token = payload.get("token")
-        self.channel_id = payload.get("channel_id")
+        self.id = payload["id"]
+        self.token = payload["token"]
+        self.channel_id = payload["channel_id"]
         self.type = payload["type"]
+        self.command: Optional[InteractionCommand] = None
+        self.options: Optional[List[InteractionOption]] = [] # type: ignore
+        
         if self.type == 2:
             self.command = InteractionCommand._from_json(payload)
             self.options: List[InteractionOption] = []
             self._make_options()
 
-        self.guild_id = payload.get("guild_id")
-        self._member = payload.get("member")
+        self.guild_id = int(payload.get("guild_id")) # type: ignore
+        self._member = payload.get("member") 
 
         if self._member:
-            self._user = self._member.get("user")
+            self._user = self._member["user"]
         else:
-            self._user = self.payload.get("user")
+            self._user = self.payload["user"]
 
     @property
     def user(self):
@@ -60,7 +63,10 @@ class Interaction:
 
     @property
     def member(self):
-        return self.cache.get_member(self.guild_id, self._member["id"])
+        if self._member:
+            return self.cache.get_member(self.guild_id, self._member["id"])
+        
+        return None
 
     @property
     def guild(self):
@@ -73,7 +79,7 @@ class Interaction:
         embed: Optional[Embed] = None,
         flags: Optional[MessageFlags] = None,
         file: Optional[File] = None,
-        components: Optional[List[Dict[Any, Any]]] = None,
+        components: Optional[List[Dict[str, Any]]] = None,
         type: int = 4,
     ) -> None:
         """
@@ -152,7 +158,7 @@ class InteractionCommand:
         return payload
 
     @classmethod
-    def _from_json(cls, payload: dt.InteractionCreateData):
+    def _from_json(cls, payload: Dict[str, Any]):
         name = payload["data"]["name"]
         description = payload["data"].get("description", "")
 

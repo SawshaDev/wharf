@@ -21,7 +21,7 @@ class Plugin:
         self.name = name
         self.description = description
 
-        self._listeners: Dict[str, CoroFunc] = defaultdict(list)
+        self._listeners: Dict[str, List[CoroFunc]] = defaultdict(list)
 
         self._bot: Optional[Bot] = None
  
@@ -34,7 +34,7 @@ class Plugin:
 
     @bot.setter
     def bot(self, bot: Bot):
-        self._bot = bot
+        self._bot = bot 
 
     def listen(self, event_name: str):
         def inner(func: CoroFunc):

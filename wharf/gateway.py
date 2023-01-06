@@ -13,7 +13,7 @@ from aiohttp import ClientWebSocketResponse, WSMsgType
 
 from .activities import Activity
 from .dispatcher import Dispatcher
-from .errors import WebsocketClosed
+from .errors import WebsocketClosed, GatewayReconnect
 
 from .types.gateway import GatewayData
 
@@ -42,7 +42,7 @@ class Gateway:
     if TYPE_CHECKING:
         heartbeat_interval: int
         ws: ClientWebSocketResponse
-        _resume_url: str
+        resume_url: str
         _last_sequence: int
 
     def __init__(self, dispatcher: Dispatcher, cache: Cache):
@@ -53,23 +53,29 @@ class Gateway:
         self.gateway_url: str = f"wss://gateway.discord.gg/?v={self.api_version}&encoding=json&compress=zlib-stream"
         self._first_heartbeat = True
         self.dispatcher = dispatcher
-        self._decompresser = zlib.decompressobj()
         self.loop = None
         self.ws: Optional[ClientWebSocketResponse] = None
         self._last_sequence: Optional[int] = None
+        self.resume_url: str = "wss://gateway.discord.gg"
+        self.session_id: Optional[str] = None
+        self.can_resume: bool = False
 
-    def _decompress_msg(self, msg: Union[bytes, str]):
+    def _decompress_msg(self, msg: bytes):
         ZLIB_SUFFIX = b"\x00\x00\xff\xff"
+        buffer = bytearray()
 
-        out_str: str = ""
+        self._decompresser = zlib.decompressobj()
+
+        buffer.extend(msg)
 
         # Message should be compressed
         if len(msg) < 4 or msg[-4:] != ZLIB_SUFFIX:
-            return out_str
+            return 
 
         buff = self._decompresser.decompress(msg)
-        out_str = buff.decode("utf-8")
-        return out_str
+        buffer = bytearray()
+        
+        return buff
 
     @property
     def identify_payload(self):
@@ -80,6 +86,7 @@ class Gateway:
                 "intents": self.intents,
                 "properties": {"os": _os, "browser": "wharf", "device": "wharf"},
                 "compress": True,
+                'large_threshold': 250,
             },
         }
 
@@ -136,9 +143,14 @@ class Gateway:
         await self.ws.send_json(payload)
 
     async def connect(
-        self, *, url: Optional[str] = None, reconnect: Optional[bool] = False
+        self, *, url: Optional[str] = None
     ):
-        self.ws = await self.cache.http._session.ws_connect(url or self.gateway_url)
+        if not url:
+            url = self.gateway_url
+
+        _log.info(url)
+
+        self.ws = await self.cache.http._session.ws_connect(url)
 
         _log.info("Connected to gateway")
 
@@ -152,21 +164,20 @@ class Gateway:
                 elif msg.type == WSMsgType.TEXT:
                     data = msg.data
 
-                data: GatewayData = json.loads(data)
+                data = json.loads(data)
+
+            
 
             if data.get("s"):
                 self._last_sequence = data.get("s", 0)
 
-            _log.info(data["op"])
 
             if data["op"] == OPCodes.hello:
-                _log.info(data)
-
                 self.heartbeat_interval = data["d"]["heartbeat_interval"]
 
                 asyncio.create_task(self.keep_heartbeat())
 
-                if reconnect:
+                if self.can_resume:
                     await self.send(self.resume_payload)
                 else:
                     await self.send(self.identify_payload)
@@ -184,7 +195,9 @@ class Gateway:
 
                 if data["t"] == "READY":
                     self.session_id = event_data["session_id"]
-                    self._resume_url = event_data["resume_gateway_url"]
+                    self.resume_url = event_data["resume_gateway_url"]
+
+                    await self.close(code=4000, resume=True)
 
                 # As messy as this all is, this probably is best here.
                 if data["t"] == "GUILD_CREATE":
@@ -216,7 +229,7 @@ class Gateway:
                 self._last_heartbeat_ack = time.perf_counter()
                 self.latency = self._last_heartbeat_ack - self._last_send
 
-            elif data["op"] == OPCodes.resume:
+            elif data["op"] == OPCodes.reconnect:
                 await self.close(code=4000, resume=True)
 
             elif data["op"] == OPCodes.reconnect:
@@ -226,12 +239,11 @@ class Gateway:
             elif data["op"] == OPCodes.invalid_session:
                 # If we're getting an invalid session, do NOT try to reconnect
                 # We get invalid session for various reasons (https://discord.com/developers/docs/topics/gateway-events#invalid-session), most of the time these are fatal.
-                _log.info("Invalid session! We will not be reconnecting.")
-                await self.close(code=4001, resume=False)
-                break
+                self.can_resume = bool(data["d"])
 
-            elif msg.type == WSMsgType.CLOSE:
-                raise WebsocketClosed(msg.data, msg.extra)
+                await self.close(code=4000)
+                return
+
 
     async def close(self, *, code: int = 1000, resume: bool = True):
         if not self.ws:
@@ -241,7 +253,7 @@ class Gateway:
             await self.ws.close(code=code)
 
             if resume:
-                await self.connect(url=self._resume_url, reconnect=True)
+                raise GatewayReconnect(self.resume_url, resume)
 
     @property
     def is_closed(self):

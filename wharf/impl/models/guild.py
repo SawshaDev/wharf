@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional, Any
 
 import discord_typings as dt
 
@@ -14,21 +14,21 @@ if TYPE_CHECKING:
 
 
 class Guild:
-    def __init__(self, data: dt.GuildData, cache: "Cache"):
+    def __init__(self, data: Dict[str, Any] , cache: "Cache"):
         self._from_data(data)
         self.cache = cache
         self._members: Dict[int, Member] = {}
         self._channels: Dict[int, TextChannel] = {}
         self._roles: Dict[int, Role] = {}
 
-    def _from_data(self, guild: dt.GuildData):
+    def _from_data(self, guild: Dict[str, Any]):
         self.name = guild.get("name")
-        self.id: int = int(guild.get("id"))
+        self.id: int = int(guild["id"])
         self.icon_hash = guild.get("icon")
         self.banner_hash = guild.get("banner")
 
     async def fetch_member(self, member_id: int):
-        return Member(await self.cache.http.get_member(member_id, self.id))
+        return Member(await self.cache.http.get_member(member_id, self.id), self.cache)
 
     async def ban(
         self,
@@ -43,7 +43,7 @@ class Guild:
 
         return Guild(data, self.cache)
 
-    async def create_role(self, name: str, *, reason: str = None) -> Role:
+    async def create_role(self, name: str, *, reason: Optional[str] = None) -> Role:
         payload = await self.cache.http.create_role(self.id, name=name, reason=reason)
         return Role(payload, self.cache)
 
