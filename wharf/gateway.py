@@ -95,6 +95,18 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
 
         return payload
 
+    @property
+    def resume_payload(self):
+        """Returns the resume payload."""
+        return {
+            "op": OPCodes.RESUME,
+            "d": {
+                "token": self.token,
+                "session_id": self.session_id,
+                "seq": self.last_sequence or 0,
+            },
+        }
+
     async def _change_presence(
         self, *, status: str, activity: Optional[Activity] = None
     ):
@@ -156,9 +168,13 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
 
     async def connect(self, url: Optional[str] = None):
         if not url:
-            url = (await self._http.get_gateway_bot())["url"]
+            self.url = (await self._http.get_gateway_bot())["url"]
+        else:
+            self.url = url
 
-        self.ws = await self._http._session.ws_connect(url)  # type: ignore
+        self.ws = await self._http._session.ws_connect(self.url)  # type: ignore
+
+        _log.info(url)
 
         msg = await self.receive()
 
@@ -167,10 +183,18 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
                 self.heartbeat_interval = self.gateway_payload["d"][
                     "heartbeat_interval"
                 ]
+        else:
+            # I guess Discord is having issues today if we get here
+            # Disconnect and DO NOT ATTEMPT a reconnection
+            return await self.close(resume=False)
+
 
         asyncio.create_task(self.keep_heartbeat())
 
-        await self.send(self.identify_payload)
+        if self.resume:
+            await self.send(self.resume_payload)
+        else:
+            await self.send(self.identify_payload)
 
         return await self.listen_for_events()
 
@@ -185,15 +209,16 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
                 if self.gateway_payload["op"] == OPCodes.DISPATCH:
                     if self.gateway_payload["t"] == "READY":
                         self.session_id = self.gateway_payload["d"]["session_id"]
-                        self.resume_url = self.gateway_payload["d"][
-                            "resume_gateway_url"
-                        ]
+                        self.resume_url = self.gateway_payload["d"]["resume_gateway_url"]
 
                     # As messy as this all is, this probably is best here.
                     if self.gateway_payload["t"] == "GUILD_CREATE":
-                        asyncio.create_task(
-                            self._cache._handle_guild_caching(self.gateway_payload["d"])
-                        )
+                        if self.url == self.resume_url:
+                            continue
+                        else:
+                            asyncio.create_task(
+                                self._cache._handle_guild_caching(self.gateway_payload["d"])
+                            )
 
                     elif self.gateway_payload["t"] == "GUILD_MEMBER_ADD":
                         self._cache.add_member(
@@ -230,6 +255,10 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
                 elif self.gateway_payload["op"] == OPCodes.HEARTBEAT:
                     await self.send(self.ping_payload)
 
+                elif self.gateway_payload["op"] == OPCodes.RECONNECT:
+                    await self.close(code=1012)
+                    return
+
                 elif self.gateway_payload["op"] == OPCodes.HEARTBEAT_ACK:
                     self._last_heartbeat_ack = time.perf_counter()
 
@@ -241,12 +270,15 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
                     await self.close(code=4000)
                     return
 
-    async def close(self, *, code: int = 1000):
+    async def close(self, *, code: int = 1000, resume: bool = True):
         if not self.ws:
             return
 
         if not self.is_closed:
             await self.ws.close(code=code)
+
+            if resume:
+                raise GatewayReconnect(self.resume_url, resume)
 
     @property
     def is_closed(self) -> bool:
