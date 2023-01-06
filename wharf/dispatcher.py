@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import inspect
 import logging
+from collections import defaultdict
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -13,8 +14,6 @@ from typing import (
     Optional,
     TypeVar,
 )
-
-from collections import defaultdict
 
 from .impl import Interaction, Member, Message
 
@@ -30,7 +29,7 @@ _log = logging.getLogger(__name__)
 
 
 class Dispatcher:
-    def __init__(self, cache: Cache):
+    def __init__(self, cache: "Cache"):
         self.events: Dict[str, List[CoroFunc]] = defaultdict(list)
         self.cache = cache
 

@@ -5,109 +5,155 @@ import json
 import logging
 import random
 import time
-import zlib
 from sys import platform as _os
-from typing import TYPE_CHECKING, Any, Dict, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, Optional, cast
+from zlib import decompressobj
 
-from aiohttp import ClientWebSocketResponse, WSMsgType
+from aiohttp import ClientWebSocketResponse, WSMessage, WSMsgType
 
 from .activities import Activity
 from .dispatcher import Dispatcher
-from .errors import WebsocketClosed, GatewayReconnect
-
+from .errors import GatewayReconnect
 from .types.gateway import GatewayData
 
 if TYPE_CHECKING:
-    from .impl.cache import Cache
+    from .impl import Cache
 
+
+DEFAULT_API_VERSION = 10
 
 _log = logging.getLogger(__name__)
 
 
 class OPCodes:
-    dispatch = 0
-    heartbeat = 1
-    identify = 2
-    presence_update = 3
-    voice_state_update = 4
-    resume = 6
-    reconnect = 7
-    request_guild_members = 8
-    invalid_session = 9
-    hello = 10
-    heartbeat_ack = 11
+    DISPATCH = 0
+    HEARTBEAT = 1
+    IDENTIFY = 2
+    PRESENCE_UPDATE = 3
+    VOICE_STATE_UPDATE = 4
+    RESUME = 6
+    RECONNECT = 7
+    REQUEST_GUILD_MEMBERS = 8
+    INVALID_SESSION = 9
+    HELLO = 10
+    HEARTBEAT_ACK = 11
 
 
-class Gateway:
+class Gateway:  # This Class is in no way supposed to be used by itself. it should ALWAYS be used with `wharf.Bot`. so seriously, dont :sob:
     if TYPE_CHECKING:
-        heartbeat_interval: int
         ws: ClientWebSocketResponse
+        heartbeat_interval: int
         resume_url: str
-        _last_sequence: int
+        last_sequence: int
 
     def __init__(self, dispatcher: Dispatcher, cache: Cache):
-        self.cache = cache
-        self.token = self.cache.http._token
-        self.intents = self.cache.http._intents
-        self.api_version = 10
-        self.gateway_url: str = f"wss://gateway.discord.gg/?v={self.api_version}&encoding=json&compress=zlib-stream"
-        self._first_heartbeat = True
-        self.dispatcher = dispatcher
-        self.loop = None
-        self.ws: Optional[ClientWebSocketResponse] = None
-        self._last_sequence: Optional[int] = None
-        self.resume_url: str = "wss://gateway.discord.gg"
-        self.session_id: Optional[str] = None
-        self.can_resume: bool = False
-        self.inflator = zlib.decompressobj()
+        self._dispatcher = dispatcher
+        self._cache = cache
+        self._http = self._cache.http
 
-    def _decompress_msg(self, msg: bytes):
+        # Defining token and intents
+        self.token = self._cache.http._token
+        self.intents = self._cache.http._intents
+
+        self.inflator = decompressobj()
+
+        self.resume: bool = False
+        self._first_heartbeat = True
+
+    def decompress_data(self, data: bytes):
         ZLIB_SUFFIX = b"\x00\x00\xff\xff"
 
         out_str: str = ""
 
         # Message should be compressed
-        if len(msg) < 4 or msg[-4:] != ZLIB_SUFFIX:
+        if len(data) < 4 or data[-4:] != ZLIB_SUFFIX:
             return out_str
 
-        buff = self.inflator.decompress(msg)
+        buff = self.inflator.decompress(data)
         out_str = buff.decode("utf-8")
+
         return out_str
 
     @property
+    def ping_payload(self):
+        payload = {"op": OPCodes.HEARTBEAT, "d": self.last_sequence}
+
+        return payload
+
+    @property
     def identify_payload(self):
-        return {
-            "op": OPCodes.identify,
+        payload = {
+            "op": OPCodes.IDENTIFY,
             "d": {
                 "token": self.token,
                 "intents": self.intents,
                 "properties": {"os": _os, "browser": "wharf", "device": "wharf"},
-                "compress": True,
-                'large_threshold': 250,
+                "large_threshold": 250,
             },
         }
+
+        return payload
 
     @property
     def resume_payload(self):
+        """Returns the resume payload."""
         return {
-            "op": OPCodes.resume,
+            "op": OPCodes.RESUME,
             "d": {
                 "token": self.token,
-                "seq": self._last_sequence or 0,
                 "session_id": self.session_id,
+                "seq": self.last_sequence or 0,
             },
         }
 
-    @property
-    def ping_payload(self):
-        payload = {"op": OPCodes.heartbeat}
+    async def _change_presence(
+        self, *, status: str, activity: Optional[Activity] = None
+    ):
+        activities = []
+        if activity is not None:
+            activities.append(activity.to_dict())
 
-        if self._last_sequence is None:
-            payload["d"] = {}
-        else:
-            payload["d"] = self._last_sequence
+        payload = {
+            "op": OPCodes.PRESENCE_UPDATE,
+            "d": {
+                "status": status,
+                "afk": False,
+                "since": 0.0,
+                "activities": activities,
+            },
+        }
 
-        return payload
+        await self.ws.send_json(payload)
+
+    async def send(self, payload: Dict[str, Any]):
+        if not self.ws:
+            return
+
+        await self.ws.send_json(payload)
+
+        _log.info("Sent payload json %s to the gateway.", payload)
+
+    async def receive(self):
+        if not self.ws:
+            return
+
+        msg: WSMessage = await self.ws.receive()
+
+        if msg.type in (WSMsgType.TEXT, WSMsgType.BINARY):
+            received_msg: str
+
+            if msg.type == WSMsgType.BINARY:
+                received_msg = self.decompress_data(msg.data)
+            else:
+                received_msg = cast(str, msg.data)
+
+            self.gateway_payload = cast(GatewayData, json.loads(received_msg))
+
+            self.last_sequence = self.gateway_payload.get("s")
+
+            _log.debug("Received data from gateway: %s", self.gateway_payload)
+
+            return True
 
     async def keep_heartbeat(self):
         jitters = self.heartbeat_interval
@@ -119,126 +165,112 @@ class Gateway:
         await asyncio.sleep(jitters / 1000)
         asyncio.create_task(self.keep_heartbeat())
 
-    async def send(self, data: dict):
-        await self.ws.send_json(data)
-        _log.info("Sent json to the gateway successfully")
-
-    async def _change_presence(self, *, status: str, activity: Activity = None):
-        activities = []
-        activities.append(activity.to_dict())
-
-        payload = {
-            "op": OPCodes.presence_update,
-            "d": {
-                "status": status,
-                "afk": False,
-                "since": 0.0,
-                "activities": activities,
-            },
-        }
-
-        await self.ws.send_json(payload)
-
-    async def connect(
-        self, *, url: Optional[str] = None
-    ):
+    async def connect(self, url: Optional[str] = None):
         if not url:
-            url = self.gateway_url
+            self.url = (await self._http.get_gateway_bot())["url"]
+        else:
+            self.url = url
+
+        self.ws = await self._http._session.ws_connect(self.url)  # type: ignore
 
         _log.info(url)
 
-        self.ws = await self.cache.http._session.ws_connect(url)
+        msg = await self.receive()
 
-        _log.info("Connected to gateway")
+        if msg and self.gateway_payload is not None:
+            if self.gateway_payload["op"] == OPCodes.HELLO:
+                self.heartbeat_interval = self.gateway_payload["d"][
+                    "heartbeat_interval"
+                ]
+        else:
+            # I guess Discord is having issues today if we get here
+            # Disconnect and DO NOT ATTEMPT a reconnection
+            return await self.close(resume=False)
+
+        asyncio.create_task(self.keep_heartbeat())
+
+        if self.resume:
+            await self.send(self.resume_payload)
+        else:
+            await self.send(self.identify_payload)
+
+        return await self.listen_for_events()
+
+    async def listen_for_events(self):
+        if not self.ws:
+            return
 
         while not self.is_closed:
-            msg = await self.ws.receive()
+            res = await self.receive()
 
-            if msg.type in (WSMsgType.BINARY, WSMsgType.TEXT):
-                data: Union[Any, str] = None
-                if msg.type == WSMsgType.BINARY:
-                    data = self._decompress_msg(msg.data)
-                elif msg.type == WSMsgType.TEXT:
-                    data = msg.data
+            if res and self.gateway_payload is not None:
+                if self.gateway_payload["op"] == OPCodes.DISPATCH:
+                    if self.gateway_payload["t"] == "READY":
+                        self.session_id = self.gateway_payload["d"]["session_id"]
+                        self.resume_url = self.gateway_payload["d"][
+                            "resume_gateway_url"
+                        ]
 
-                data = json.loads(data)
+                    # As messy as this all is, this probably is best here.
+                    if self.gateway_payload["t"] == "GUILD_CREATE":
+                        if self.url == self.resume_url:
+                            continue
+                        else:
+                            asyncio.create_task(
+                                self._cache._handle_guild_caching(
+                                    self.gateway_payload["d"]
+                                )
+                            )
 
-            
+                    elif self.gateway_payload["t"] == "GUILD_MEMBER_ADD":
+                        self._cache.add_member(
+                            int(self.gateway_payload["d"]["guild_id"]),
+                            self.gateway_payload["d"],
+                        )
 
-            if data.get("s"):
-                self._last_sequence = data.get("s", 0)
+                    elif self.gateway_payload["t"] == "GUILD_DELETE":
+                        self._cache.remove_guild(int(self.gateway_payload["d"]["id"]))
 
+                    elif self.gateway_payload["t"] == "GUILD_MEMBER_REMOVE":
+                        self._cache.remove_member(
+                            int(self.gateway_payload["d"]["guild_id"]),
+                            int(self.gateway_payload["d"]["user"]["id"]),
+                        )
 
-            if data["op"] == OPCodes.hello:
-                self.heartbeat_interval = data["d"]["heartbeat_interval"]
+                    elif self.gateway_payload["t"] == "CHANNEL_DELETE":
+                        self._cache.remove_channel(
+                            int(self.gateway_payload["d"]["guild_id"]),
+                            int(self.gateway_payload["d"]["id"]),
+                        )
 
-                asyncio.create_task(self.keep_heartbeat())
+                    else:
+                        if (
+                            self.gateway_payload["t"].lower()
+                            not in self._dispatcher.events.keys()
+                        ):
+                            continue
 
-                if self.can_resume:
-                    await self.send(self.resume_payload)
-                else:
-                    await self.send(self.identify_payload)
+                        self._dispatcher.dispatch(
+                            self.gateway_payload["t"].lower(), self.gateway_payload["d"]
+                        )
 
-                self._last_send = time.perf_counter()
+                elif self.gateway_payload["op"] == OPCodes.HEARTBEAT:
+                    await self.send(self.ping_payload)
 
-            elif data["op"] == OPCodes.heartbeat:
-                await self.send(self.ping_payload)
-                self._last_send = time.perf_counter()
+                elif self.gateway_payload["op"] == OPCodes.RECONNECT:
+                    await self.close(code=1012)
+                    return
 
-            elif data["op"] == OPCodes.dispatch:
-                event_data = data["d"]
+                elif self.gateway_payload["op"] == OPCodes.HEARTBEAT_ACK:
+                    self._last_heartbeat_ack = time.perf_counter()
 
-                _log.info(data["t"])
+                    _log.info("Awknoledged heartbeat!")
 
-                if data["t"] == "READY":
-                    self.session_id = event_data["session_id"]
-                    self.resume_url = event_data["resume_gateway_url"]
+                elif self.gateway_payload["op"] == OPCodes.INVALID_SESSION:
+                    self.resume = bool(self.gateway_payload.get("d"))
 
-                # As messy as this all is, this probably is best here.
-                if data["t"] == "GUILD_CREATE":
-                    asyncio.create_task(self.cache._handle_guild_caching(event_data))
-
-                elif data["t"] == "GUILD_MEMBER_ADD":
-                    await self.cache.add_member(int(event_data["guild_id"]), event_data)
-
-                elif data["t"] == "GUILD_DELETE":
-                    self.cache.remove_guild(int(event_data["id"]))
-
-                elif data["t"] == "GUILD_MEMBER_REMOVE":
-                    self.cache.remove_member(
-                        int(event_data["guild_id"]), int(event_data["user"]["id"])
-                    )
-
-                elif data["t"] == "CHANNEL_DELETE":
-                    self.cache.remove_channel(
-                        int(event_data["guild_id"]), int(event_data["id"])
-                    )
-
-                else:
-                    if data["t"].lower() not in self.dispatcher.events.keys():
-                        continue
-
-                    self.dispatcher.dispatch(data["t"].lower(), event_data)
-
-            elif data["op"] == OPCodes.heartbeat_ack:
-                self._last_heartbeat_ack = time.perf_counter()
-                self.latency = self._last_heartbeat_ack - self._last_send
-
-            elif data["op"] == OPCodes.reconnect:
-                await self.close(code=4000, resume=True)
-
-            elif data["op"] == OPCodes.reconnect:
-                _log.info("Reconnected! :)")
-                await self.close(code=4000, resume=True)
-
-            elif data["op"] == OPCodes.invalid_session:
-                # If we're getting an invalid session, do NOT try to reconnect
-                # We get invalid session for various reasons (https://discord.com/developers/docs/topics/gateway-events#invalid-session), most of the time these are fatal.
-                self.can_resume = bool(data["d"])
-
-                await self.close(code=4000)
-                return
-
+                    await self.close(code=4000)
+                    return
 
     async def close(self, *, code: int = 1000, resume: bool = True):
         if not self.ws:
@@ -251,5 +283,8 @@ class Gateway:
                 raise GatewayReconnect(self.resume_url, resume)
 
     @property
-    def is_closed(self):
-        return self.ws.closed if self.ws else False
+    def is_closed(self) -> bool:
+        if not self.ws:
+            return False
+
+        return self.ws.closed

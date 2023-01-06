@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, List, Optional, Any
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import discord_typings as dt
 
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 class Guild:
-    def __init__(self, data: Dict[str, Any] , cache: "Cache"):
+    def __init__(self, data: Dict[str, Any], cache: "Cache"):
         self._from_data(data)
         self.cache = cache
         self._members: Dict[int, Member] = {}

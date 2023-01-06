@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 import discord_typings as dt
 
-from ..impl import Guild, Member, Role, TextChannel, User, DMChannel
+from ..impl import DMChannel, Guild, Member, Role, TextChannel, User
 
 if TYPE_CHECKING:
     from ..http import HTTPClient
@@ -39,16 +39,16 @@ class Cache:
     def remove_channel(self, guild_id: int, channel_id: int) -> Guild:
         guild = self.get_guild(guild_id)
         assert guild is not None
-        
+
         guild._remove_channel(channel_id)
         self.channels[guild_id].pop(channel_id)
 
         return guild
 
-    def remove_member(self, guild_id: int, member_id: int) -> Guild:    
+    def remove_member(self, guild_id: int, member_id: int) -> Guild:
         guild = self.get_guild(guild_id)
         assert guild is not None
-        
+
         guild._remove_member(member_id)
         self.members[guild_id].pop(member_id)
 
@@ -94,7 +94,9 @@ class Cache:
 
         return guild
 
-    def get_channel(self, guild_id: int, channel_id: int) -> Optional[Union[TextChannel, DMChannel]]:
+    def get_channel(
+        self, guild_id: int, channel_id: int
+    ) -> Optional[Union[TextChannel, DMChannel]]:
         return self.channels[guild_id].get(channel_id)
 
     def add_channel(self, guild_id: int, payload: Dict[str, Any]) -> TextChannel:
@@ -164,13 +166,13 @@ class Cache:
         roles = await self.http.get_guild_roles(guild_id)
 
         for channel in channels:
-            self.add_channel(guild_id, channel) # type: ignore
+            self.add_channel(guild_id, channel)  # type: ignore
         for role in roles:
-            self.add_role(guild_id, role) # type: ignore
+            self.add_role(guild_id, role)  # type: ignore
 
         for member in members:
-            self.add_user(member["user"])# type: ignore            
-            self.add_member(guild_id, member) # type: ignore
+            self.add_user(member["user"])  # type: ignore
+            self.add_member(guild_id, member)  # type: ignore
 
         return guild
 
