@@ -13,9 +13,8 @@ from aiohttp import ClientWebSocketResponse, WSMessage, WSMsgType
 
 from .activities import Activity
 from .dispatcher import Dispatcher
-from .types.gateway import GatewayData
-
 from .errors import GatewayReconnect
+from .types.gateway import GatewayData
 
 if TYPE_CHECKING:
     from .impl import Cache
