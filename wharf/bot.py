@@ -62,11 +62,7 @@ class Bot:
         self.gateway = Gateway(self.dispatcher, self.cache)
         gateway_url: Optional[str] = None
 
-        while True:
-            try:
-                await self.gateway.connect(url=gateway_url)
-            except GatewayReconnect as gr:
-                gateway_url = gr.url
+        await self.gateway.connect()
                 
 
     def listen(self, name: str):
