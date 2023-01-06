@@ -59,23 +59,20 @@ class Gateway:
         self.resume_url: str = "wss://gateway.discord.gg"
         self.session_id: Optional[str] = None
         self.can_resume: bool = False
+        self.inflator = zlib.decompressobj()
 
     def _decompress_msg(self, msg: bytes):
         ZLIB_SUFFIX = b"\x00\x00\xff\xff"
-        buffer = bytearray()
 
-        self._decompresser = zlib.decompressobj()
-
-        buffer.extend(msg)
+        out_str: str = ""
 
         # Message should be compressed
         if len(msg) < 4 or msg[-4:] != ZLIB_SUFFIX:
-            return 
+            return out_str
 
-        buff = self._decompresser.decompress(msg)
-        buffer = bytearray()
-        
-        return buff
+        buff = self.inflator.decompress(msg)
+        out_str = buff.decode("utf-8")
+        return out_str
 
     @property
     def identify_payload(self):
