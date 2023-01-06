@@ -1,18 +1,15 @@
 from __future__ import annotations
 
 import asyncio
-import random
-from sys import platform as _os
-import time
-from aiohttp import ClientWebSocketResponse, WSMsgType, WSMessage
-
-from typing import TYPE_CHECKING, Optional, Dict, Any, cast
-
 import json
-
 import logging
-
+import random
+import time
+from sys import platform as _os
+from typing import TYPE_CHECKING, Any, Dict, Optional, cast
 from zlib import decompressobj
+
+from aiohttp import ClientWebSocketResponse, WSMessage, WSMsgType
 
 from .types.gateway import GatewayData
 
@@ -24,6 +21,7 @@ if TYPE_CHECKING:
 DEFAULT_API_VERSION = 10
 
 _log = logging.getLogger(__name__)
+
 
 class OPCodes:
     DISPATCH = 0
@@ -76,9 +74,7 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
 
     @property
     def ping_payload(self):
-        payload = {
-            "op": OPCodes.HEARTBEAT, "d": self.last_sequence            
-        }
+        payload = {"op": OPCodes.HEARTBEAT, "d": self.last_sequence}
 
         return payload
 
@@ -89,15 +85,11 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
             "d": {
                 "token": self.token,
                 "intents": self.intents,
-                "properties": {
-                    "os": _os,
-                    "browser": "wharf",
-                    "device": "wharf"
-                },
-                "large_threshold": 250
-            }
+                "properties": {"os": _os, "browser": "wharf", "device": "wharf"},
+                "large_threshold": 250,
+            },
         }
-        
+
         return payload
 
     async def send(self, payload: Dict[str, Any]):
@@ -111,7 +103,7 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
     async def receive(self):
         if not self.ws:
             return
-        
+
         msg: WSMessage = await self.ws.receive()
 
         if msg.type in (WSMsgType.TEXT, WSMsgType.BINARY):
@@ -137,18 +129,20 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
         await self.ws.send_json(self.ping_payload)
         await asyncio.sleep(jitters / 1000)
         asyncio.create_task(self.keep_heartbeat())
-    
+
     async def connect(self, url: Optional[str] = None):
         if not url:
             url = (await self._http.get_gateway_bot())["url"]
 
-        self.ws = await self._http._session.ws_connect(url) # type: ignore
+        self.ws = await self._http._session.ws_connect(url)  # type: ignore
 
         msg = await self.receive()
 
         if msg and self.gateway_payload is not None:
             if self.gateway_payload["op"] == OPCodes.HELLO:
-                self.heartbeat_interval = self.gateway_payload["d"]["heartbeat_interval"]
+                self.heartbeat_interval = self.gateway_payload["d"][
+                    "heartbeat_interval"
+                ]
 
         asyncio.create_task(self.keep_heartbeat())
 
@@ -159,7 +153,7 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
     async def listen_for_events(self):
         if not self.ws:
             return
-        
+
         while not self.is_closed:
             res = await self.receive()
 
@@ -169,34 +163,48 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
                 if self.gateway_payload["op"] == OPCodes.DISPATCH:
                     if self.gateway_payload["t"] == "READY":
                         self.session_id = self.gateway_payload["d"]["session_id"]
-                        self.resume_url = self.gateway_payload["d"]["resume_gateway_url"]
+                        self.resume_url = self.gateway_payload["d"][
+                            "resume_gateway_url"
+                        ]
 
                     # As messy as this all is, this probably is best here.
                     if self.gateway_payload["t"] == "GUILD_CREATE":
-                        asyncio.create_task(self._cache._handle_guild_caching(self.gateway_payload["d"]))
+                        asyncio.create_task(
+                            self._cache._handle_guild_caching(self.gateway_payload["d"])
+                        )
 
                     elif self.gateway_payload["t"] == "GUILD_MEMBER_ADD":
-                        self._cache.add_member(int(self.gateway_payload["d"]["guild_id"]), self.gateway_payload["d"])
+                        self._cache.add_member(
+                            int(self.gateway_payload["d"]["guild_id"]),
+                            self.gateway_payload["d"],
+                        )
 
                     elif self.gateway_payload["t"] == "GUILD_DELETE":
                         self._cache.remove_guild(int(self.gateway_payload["d"]["id"]))
 
                     elif self.gateway_payload["t"] == "GUILD_MEMBER_REMOVE":
                         self._cache.remove_member(
-                            int(self.gateway_payload["d"]["guild_id"]), int(self.gateway_payload["d"]["user"]["id"])
+                            int(self.gateway_payload["d"]["guild_id"]),
+                            int(self.gateway_payload["d"]["user"]["id"]),
                         )
 
                     elif self.gateway_payload["t"] == "CHANNEL_DELETE":
                         self._cache.remove_channel(
-                            int(self.gateway_payload["d"]["guild_id"]), int(self.gateway_payload["d"]["id"])
+                            int(self.gateway_payload["d"]["guild_id"]),
+                            int(self.gateway_payload["d"]["id"]),
                         )
 
                     else:
-                        if self.gateway_payload["t"].lower() not in self._dispatcher.events.keys():
+                        if (
+                            self.gateway_payload["t"].lower()
+                            not in self._dispatcher.events.keys()
+                        ):
                             continue
 
-                        self._dispatcher.dispatch(self.gateway_payload["t"].lower(), self.gateway_payload["d"])
-            
+                        self._dispatcher.dispatch(
+                            self.gateway_payload["t"].lower(), self.gateway_payload["d"]
+                        )
+
             elif self.gateway_payload["op"] == OPCodes.HEARTBEAT:
                 await self.send(self.ping_payload)
 
@@ -211,8 +219,3 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
             return False
 
         return self.ws.closed
-        
-
-
-        
-

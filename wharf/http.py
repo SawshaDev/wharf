@@ -90,7 +90,7 @@ class HTTPClient:
     async def _text_or_json(resp: aiohttp.ClientResponse) -> Dict[str, Any]:
         text = await resp.text()
 
-        return json.loads(text) if resp.content_type == "application/json" else text # type: ignore
+        return json.loads(text) if resp.content_type == "application/json" else text  # type: ignore
 
     @staticmethod
     def _prepare_data(data: Optional[dict[str, Any]], files: Optional[List[File]]):
@@ -122,7 +122,7 @@ class HTTPClient:
         files: Optional[List[File]] = None,
         reason: Optional[str] = None,
         **kwargs,
-    ) -> Dict[str, Any]: # type: ignore
+    ) -> Dict[str, Any]:  # type: ignore
         self.req_id += 1
 
         query_params = query_params or {}
@@ -262,7 +262,7 @@ class HTTPClient:
         embed: Optional[Embed] = None,
         flags: Optional[MessageFlags] = None,
         file: Optional[File] = None,
-        components: Optional[List[Dict[str, Any]]] =None
+        components: Optional[List[Dict[str, Any]]] = None,
     ):
         """Responds to an interaction
 
@@ -299,7 +299,7 @@ class HTTPClient:
         if embed:
             embeds.append(embed.to_dict())
             payload["embeds"] = embeds
-        
+
         if components:
             payload["components"] = components
 

@@ -23,7 +23,7 @@ class Channel:
 
     @property
     def id(self) -> int:
-        return int(self._id) # type: ignore
+        return int(self._id)  # type: ignore
 
     @property
     def type(self) -> ChannelTypes:
@@ -41,7 +41,7 @@ class TextChannel(Channel):
 
     @property
     def guild(self) -> Optional[Guild]:
-        return self.cache.get_guild(self._payload.get("guild_id")) # type: ignore # No idea how to fix.
+        return self.cache.get_guild(self._payload.get("guild_id"))  # type: ignore # No idea how to fix.
 
 
 class DMChannel(Channel):

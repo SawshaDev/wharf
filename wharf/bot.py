@@ -28,17 +28,13 @@ class ExtProtocol(Protocol):
 
 class Bot:
     def __init__(
-        self, 
-        *,
-        token: str, 
-        intents: Intents, 
-        cache: Cache = Cache # type: ignore    
+        self, *, token: str, intents: Intents, cache: Cache = Cache  # type: ignore
     ):
         self.intents = intents
         self.token = token
         self._slash_commands = []
         self.http = HTTPClient()
-        self.cache: Cache = cache(self.http) # type: ignore        
+        self.cache: Cache = cache(self.http)  # type: ignore
         self.dispatcher = Dispatcher(self.cache)
 
         # ws gets filled in later on
@@ -64,7 +60,6 @@ class Bot:
         gateway_url: Optional[str] = None
 
         await self.gateway.connect()
-                
 
     def listen(self, name: str):
         def inner(func):
@@ -122,14 +117,16 @@ class Bot:
 
     def remove_plugin(self, plugin: Union[str, Plugin]) -> None:
         if isinstance(plugin, str):
-            plugin = self.fetch_plugin(plugin) # type: ignore # Shit crazy?
+            plugin = self.fetch_plugin(plugin)  # type: ignore # Shit crazy?
 
         if plugin is None:
             return
-        
-        self._plugins.pop(plugin.name) # type: ignore
-    
-    async def change_presence(self, *, status: Status, activity: Optional[Activity] = None):
+
+        self._plugins.pop(plugin.name)  # type: ignore
+
+    async def change_presence(
+        self, *, status: Status, activity: Optional[Activity] = None
+    ):
         await self.gateway._change_presence(status=status.value, activity=activity)
 
     async def fetch_user(self, user_id: int):
