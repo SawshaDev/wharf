@@ -5,6 +5,7 @@ import wharf
 
 plugin = wharf.Plugin(name="MyExt")
 
+
 @plugin.listen("message_edit")
 async def message_edit(msg: wharf.Message):
     print(msg.content)
@@ -13,6 +14,7 @@ async def message_edit(msg: wharf.Message):
 # These two functions are needed, both involve loading and unloading the plugins!
 def load(bot):
     bot.add_plugin(plugin)
+
 
 def remove(bot):
     bot.remove_plugin(plugin)

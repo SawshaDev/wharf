@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TypedDict, Any, Dict
+from typing import Any, Dict, TypedDict
 
 
 class GatewayData(TypedDict):
