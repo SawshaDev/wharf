@@ -4,3 +4,4 @@ from .guild import *
 from .interaction import *
 from .message import *
 from .user import *
+from .role import *

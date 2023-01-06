@@ -61,7 +61,6 @@ class Bot:
 
     async def connect(self):
         self.gateway = Gateway(self.dispatcher, self.cache)
-        gateway_url: Optional[str] = None
 
         await self.gateway.connect()
                 
@@ -166,6 +165,6 @@ class Bot:
             self.remove_plugin(plugin)
 
         if self.gateway is not None:
-            await self.gateway.close(resume=False)
+            await self.gateway.close()
 
         await self.http.close()

@@ -29,7 +29,7 @@ _log = logging.getLogger(__name__)
 
 
 class Dispatcher:
-    def __init__(self, cache: Cache):
+    def __init__(self, cache: "Cache"):
         self.events: Dict[str, List[CoroFunc]] = defaultdict(list)
         self.cache = cache
 

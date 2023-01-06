@@ -14,10 +14,12 @@ import logging
 
 from zlib import decompressobj
 
+from .activities import Activity
+from .dispatcher import Dispatcher
+
 from .types.gateway import GatewayData
 
 if TYPE_CHECKING:
-    from .dispatcher import Dispatcher
     from .impl import Cache
 
 
@@ -100,6 +102,23 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
         
         return payload
 
+    async def _change_presence(self, *, status: str, activity: Optional[Activity] = None):
+        activities = []
+        if activity is not None:
+            activities.append(activity.to_dict())
+
+        payload = {
+            "op": OPCodes.PRESENCE_UPDATE,
+            "d": {
+                "status": status,
+                "afk": False,
+                "since": 0.0,
+                "activities": activities,
+            },
+        }
+
+        await self.ws.send_json(payload)
+
     async def send(self, payload: Dict[str, Any]):
         if not self.ws:
             return
@@ -163,8 +182,7 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
         while not self.is_closed:
             res = await self.receive()
 
-            _log.info(self.gateway_payload["d"])
-
+            
             if res and self.gateway_payload is not None:
                 if self.gateway_payload["op"] == OPCodes.DISPATCH:
                     if self.gateway_payload["t"] == "READY":
@@ -204,6 +222,13 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
                 self._last_heartbeat_ack = time.perf_counter()
 
                 _log.info("Awknoledged heartbeat!")
+
+    async def close(self, *, code: int = 1000):
+        if not self.ws:
+            return
+
+        if not self.is_closed:
+            await self.ws.close(code=code)
 
     @property
     def is_closed(self) -> bool:
