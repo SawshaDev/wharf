@@ -87,10 +87,10 @@ class HTTPClient:
         self.base_headers = {"Authorization": f"Bot {self._token}"}
 
     @staticmethod
-    async def _text_or_json(resp: aiohttp.ClientResponse):
+    async def _text_or_json(resp: aiohttp.ClientResponse) -> Dict[str, Any]:
         text = await resp.text()
 
-        return json.loads(text) if resp.content_type == "application/json" else text
+        return json.loads(text) if resp.content_type == "application/json" else text # type: ignore
 
     @staticmethod
     def _prepare_data(data: Optional[dict[str, Any]], files: Optional[List[File]]):
@@ -118,11 +118,11 @@ class HTTPClient:
         route: Route,
         *,
         query_params: Optional[dict[str, Any]] = None,
-        json_params: dict = None,
+        json_params: Optional[Dict[str, Any]] = None,
         files: Optional[List[File]] = None,
         reason: Optional[str] = None,
         **kwargs,
-    ):
+    ) -> Dict[str, Any]: # type: ignore
         self.req_id += 1
 
         query_params = query_params or {}
@@ -262,6 +262,7 @@ class HTTPClient:
         embed: Optional[Embed] = None,
         flags: Optional[MessageFlags] = None,
         file: Optional[File] = None,
+        components: Optional[List[Dict[str, Any]]] =None
     ):
         """Responds to an interaction
 
@@ -286,6 +287,7 @@ class HTTPClient:
         payload = {}
 
         embeds = []
+        _components = []
         files = []
 
         if content:
@@ -297,6 +299,9 @@ class HTTPClient:
         if embed:
             embeds.append(embed.to_dict())
             payload["embeds"] = embeds
+        
+        if components:
+            payload["components"] = components
 
         if file:
             files.append(file)
@@ -338,8 +343,8 @@ class HTTPClient:
             files=files or None,
         )
 
-    def get_user(self, user_id: int):
-        return self.request(Route("GET", f"/users/{user_id}"))
+    async def get_user(self, user_id: int):
+        return await self.request(Route("GET", f"/users/{user_id}"))
 
     def create_role(
         self,

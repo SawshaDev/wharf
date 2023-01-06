@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Dict, Any
 
 import discord_typings as dt
 
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 class Member:
-    def __init__(self, payload: dt.GuildMemberData, cache: "Cache"):
+    def __init__(self, payload: Dict[str, Any], cache: "Cache"):
         self.cache = cache
         self._payload = payload
         self._from_data(payload)
@@ -22,7 +22,7 @@ class Member:
     def __str__(self) -> str:
         return f"{self.name}#{self.discriminator}"
 
-    def _from_data(self, payload: dt.GuildMemberData):
+    def _from_data(self, payload: Dict[str, Any]):
         self.guild_avatar = payload.get("avatar")
         self.joined_at = payload["joined_at"]
         self.discriminator = payload["user"]["discriminator"]

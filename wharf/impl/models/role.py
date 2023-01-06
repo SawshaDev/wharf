@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, Any
 
 import discord_typings as dt
 
@@ -7,11 +7,11 @@ if TYPE_CHECKING:
 
 
 class Role:
-    def __init__(self, payload: dt.RoleData, cache: "Cache"):
+    def __init__(self, payload: Dict[str, Any], cache: "Cache"):
         self._from_data(payload)
         self.cache = cache
 
-    def _from_data(self, payload: dt.RoleData):
+    def _from_data(self, payload: Dict[str, Any]):
         self._name = payload["name"]
         self._id = payload["id"]
         self._color = payload["color"]

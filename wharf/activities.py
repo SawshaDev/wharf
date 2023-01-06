@@ -12,7 +12,7 @@ class Activity:
         self.name = kwargs.pop("name")
         self.url: Optional[str] = kwargs.pop("url", None)
 
-        activity_type = kwargs.pop("type", -1)
+        activity_type: ActivityType = kwargs.pop("type", -1)
         self.type: ActivityType = activity_type
 
     def to_dict(self) -> Dict[str, Any]:
