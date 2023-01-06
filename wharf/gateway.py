@@ -1,24 +1,18 @@
 from __future__ import annotations
 
 import asyncio
-import random
-from sys import platform as _os
-import time
-from aiohttp import ClientWebSocketResponse, WSMsgType, WSMessage
-
-from typing import TYPE_CHECKING, Optional, Dict, Any, cast
-
 import json
-
 import logging
-
+import random
+import time
+from sys import platform as _os
+from typing import TYPE_CHECKING, Any, Dict, Optional, cast
 from zlib import decompressobj
-
-from .activities import Activity
-from .dispatcher import Dispatcher
 
 from aiohttp import ClientWebSocketResponse, WSMessage, WSMsgType
 
+from .activities import Activity
+from .dispatcher import Dispatcher
 from .types.gateway import GatewayData
 
 from .errors import GatewayReconnect
@@ -30,6 +24,7 @@ if TYPE_CHECKING:
 DEFAULT_API_VERSION = 10
 
 _log = logging.getLogger(__name__)
+
 
 class OPCodes:
     DISPATCH = 0
@@ -100,7 +95,9 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
 
         return payload
 
-    async def _change_presence(self, *, status: str, activity: Optional[Activity] = None):
+    async def _change_presence(
+        self, *, status: str, activity: Optional[Activity] = None
+    ):
         activities = []
         if activity is not None:
             activities.append(activity.to_dict())
@@ -184,7 +181,6 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
         while not self.is_closed:
             res = await self.receive()
 
-            
             if res and self.gateway_payload is not None:
                 if self.gateway_payload["op"] == OPCodes.DISPATCH:
                     if self.gateway_payload["t"] == "READY":
