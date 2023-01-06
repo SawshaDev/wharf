@@ -197,8 +197,6 @@ class Gateway:
                     self.session_id = event_data["session_id"]
                     self.resume_url = event_data["resume_gateway_url"]
 
-                    await self.close(code=4000, resume=True)
-
                 # As messy as this all is, this probably is best here.
                 if data["t"] == "GUILD_CREATE":
                     asyncio.create_task(self.cache._handle_guild_caching(event_data))
