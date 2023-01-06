@@ -22,7 +22,7 @@ class Message:
         self._channel_id = message["channel_id"]
 
         if message.get("guild_id") is not None:
-            self._guild_id = int(message.get("guild_id")) # type: ignore
+            self._guild_id = int(message.get("guild_id"))  # type: ignore
 
     @property
     def guild(self) -> Optional[Guild]:

@@ -38,7 +38,7 @@ class Plugin:
 
     @bot.setter
     def bot(self, bot: Bot):
-        self._bot = bot 
+        self._bot = bot
 
     def listen(self, event_name: str):
         def inner(func: CoroFunc):

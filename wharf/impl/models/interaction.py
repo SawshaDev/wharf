@@ -42,15 +42,15 @@ class Interaction:
         self.channel_id = payload["channel_id"]
         self.type = payload["type"]
         self.command: Optional[InteractionCommand] = None
-        self.options: Optional[List[InteractionOption]] = [] # type: ignore
-        
+        self.options: Optional[List[InteractionOption]] = []  # type: ignore
+
         if self.type == 2:
             self.command = InteractionCommand._from_json(payload)
             self.options: List[InteractionOption] = []
             self._make_options()
 
-        self.guild_id = int(payload.get("guild_id")) # type: ignore
-        self._member = payload.get("member") 
+        self.guild_id = int(payload.get("guild_id"))  # type: ignore
+        self._member = payload.get("member")
 
         if self._member:
             self._user = self._member["user"]
@@ -65,7 +65,7 @@ class Interaction:
     def member(self):
         if self._member:
             return self.cache.get_member(self.guild_id, self._member["id"])
-        
+
         return None
 
     @property
