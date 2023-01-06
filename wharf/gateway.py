@@ -187,7 +187,6 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
             # Disconnect and DO NOT ATTEMPT a reconnection
             return await self.close(resume=False)
 
-
         asyncio.create_task(self.keep_heartbeat())
 
         if self.resume:
@@ -208,7 +207,9 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
                 if self.gateway_payload["op"] == OPCodes.DISPATCH:
                     if self.gateway_payload["t"] == "READY":
                         self.session_id = self.gateway_payload["d"]["session_id"]
-                        self.resume_url = self.gateway_payload["d"]["resume_gateway_url"]
+                        self.resume_url = self.gateway_payload["d"][
+                            "resume_gateway_url"
+                        ]
 
                     # As messy as this all is, this probably is best here.
                     if self.gateway_payload["t"] == "GUILD_CREATE":
@@ -216,7 +217,9 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
                             continue
                         else:
                             asyncio.create_task(
-                                self._cache._handle_guild_caching(self.gateway_payload["d"])
+                                self._cache._handle_guild_caching(
+                                    self.gateway_payload["d"]
+                                )
                             )
 
                     elif self.gateway_payload["t"] == "GUILD_MEMBER_ADD":

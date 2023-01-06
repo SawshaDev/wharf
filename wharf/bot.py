@@ -67,7 +67,6 @@ class Bot:
             except GatewayReconnect as gr:
                 gateway_url = gr.url
 
-
     def listen(self, name: str):
         def inner(func):
             if name not in self.dispatcher.events:
