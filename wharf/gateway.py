@@ -21,6 +21,8 @@ from aiohttp import ClientWebSocketResponse, WSMessage, WSMsgType
 
 from .types.gateway import GatewayData
 
+from .errors import GatewayReconnect
+
 if TYPE_CHECKING:
     from .impl import Cache
 
@@ -121,7 +123,7 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
 
         await self.ws.send_json(payload)
 
-        _log.debug("Sent payload json %s to the gateway.", payload)
+        _log.info("Sent payload json %s to the gateway.", payload)
 
     async def receive(self):
         if not self.ws:
@@ -140,6 +142,8 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
             self.gateway_payload = cast(GatewayData, json.loads(received_msg))
 
             self.last_sequence = self.gateway_payload.get("s")
+
+            _log.debug("Received data from gateway: %s", self.gateway_payload)
 
             return True
 
@@ -227,13 +231,19 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
                             self.gateway_payload["t"].lower(), self.gateway_payload["d"]
                         )
 
-            elif self.gateway_payload["op"] == OPCodes.HEARTBEAT:
-                await self.send(self.ping_payload)
+                elif self.gateway_payload["op"] == OPCodes.HEARTBEAT:
+                    await self.send(self.ping_payload)
 
-            elif self.gateway_payload["op"] == OPCodes.HEARTBEAT_ACK:
-                self._last_heartbeat_ack = time.perf_counter()
+                elif self.gateway_payload["op"] == OPCodes.HEARTBEAT_ACK:
+                    self._last_heartbeat_ack = time.perf_counter()
 
-                _log.info("Awknoledged heartbeat!")
+                    _log.info("Awknoledged heartbeat!")
+
+                elif self.gateway_payload["op"] == OPCodes.INVALID_SESSION:
+                    self.resume = bool(self.gateway_payload.get("d"))
+
+                    await self.close(code=4000)
+                    return
 
     async def close(self, *, code: int = 1000):
         if not self.ws:
