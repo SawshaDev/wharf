@@ -33,27 +33,28 @@ class Dispatcher:
         self.events: Dict[str, List[CoroFunc]] = defaultdict(list)
         self.cache = cache
 
-    def filter_events(self, event_type: str, event_data):
+    def filter_events(self, event_type: str, event_data: Dict[str, Any]):
+        self.event_map = {
+            "message_create": Message,
+            "message_edit": Message,
+            "interaction_create": Interaction,
+            "guild_members_add": Member,
+            "guild_members_remove": Member,
+            "ready": None,
+        }
 
         if event_data is None:
-            raise ValueError("event data cannot be None")
+            raise ValueError("Event data CANNOT be None")
 
-        if event_type in ("message_create", "message_update"):
-            if event_type == "message_update" and len(event_data) == 4:
-                return
-
-            return Message(event_data, self.cache)
-
-        elif event_type == "interaction_create":
-            return Interaction(self.cache, event_data)
-
-        elif event_type in ("guild_member_add", "guild_member_remove"):
-            return Member(event_data, self.cache)
-
-        elif event_type == "ready":
+        if event_type == "ready":
             return None
 
-        return event_data
+        event_object = self.event_map.get(event_type)
+
+        if event_object is None:
+            return event_data
+        
+        return event_object(event_data, self.cache)
 
     def add_callback(self, event_name: str, func: CoroFunc):
         self.events[event_name].append(func)

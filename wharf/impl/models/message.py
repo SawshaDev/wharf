@@ -18,7 +18,7 @@ class Message:
 
     def _from_data(self, message: Dict[str, str]):
         self._content = message["content"]
-        self._author_id = message["author"]
+        self._author_id = message["author"]["id"] # type: ignore
         self._channel_id = message["channel_id"]
 
         if message.get("guild_id") is not None:
