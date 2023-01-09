@@ -16,6 +16,7 @@ class InteractionOptionType(Enum):
     channel = 7
     role = 8
     mentionable = 9
+    float = 10
     attachment = 11
 
 
