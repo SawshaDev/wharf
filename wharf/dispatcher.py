@@ -40,7 +40,6 @@ class Dispatcher:
             "interaction_create": Interaction,
             "guild_members_add": Member,
             "guild_members_remove": Member,
-            "ready": None,
         }
 
         if event_data is None:
@@ -59,23 +58,24 @@ class Dispatcher:
     def add_callback(self, event_name: str, func: CoroFunc):
         self.events[event_name].append(func)
 
-        _log.debug("Added callback for %r", event_name)
+        _log.info("Added callback for %r", event_name)
 
     def subscribe(self, event_name: str, func: CoroFunc):
         self.add_callback(event_name, func)
 
-        _log.debug("Subscribed to %r", event_name)
+        _log.info("Subscribed to %r", event_name)
 
     def get_event(self, event_name: str):
         return self.events.get(event_name)
 
-    def dispatch(self, event_name: str, *args):
+    def dispatch(self, event_name: str, data: Optional[Any] = None):
         event = self.get_event(event_name)
 
         if event is None:
             raise ValueError("Event not in any events known :(")
 
-        data = self.filter_events(event_name, *args)
+        if data  is not None:
+            data = self.filter_events(event_name, data)
 
         for callback in event:
             if data is None:
@@ -83,4 +83,4 @@ class Dispatcher:
             else:
                 asyncio.create_task(callback(data))
 
-        _log.debug("Dispatched event %r", event_name)
+        _log.info("Dispatched event %r", event_name)

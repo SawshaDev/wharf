@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import importlib
+import logging
 import sys
 from typing import Dict, List, Optional, Protocol, Union, cast
 
@@ -18,6 +19,8 @@ from .intents import Intents
 from .plugin import Plugin
 
 
+_log = logging.getLogger(__name__)
+
 class ExtProtocol(Protocol):
     def load(self, bot: Bot):
         ...
@@ -28,7 +31,7 @@ class ExtProtocol(Protocol):
 
 class Bot:
     def __init__(
-        self, *, token: str, intents: Intents, cache: Cache = Cache  # type: ignore
+        self, *, token: str, intents: Intents, cache: Cache = Cache, purge_old_slash: bool = False  # type: ignore
     ):
         self.intents = intents
         self.token = token
@@ -36,6 +39,7 @@ class Bot:
         self.http = HTTPClient()
         self.cache: Cache = cache(self.http)  # type: ignore
         self.dispatcher = Dispatcher(self.cache)
+        self.purge_slash = purge_old_slash
 
         # ws gets filled in later on
         self.gateway: Gateway = None  # type: ignore
@@ -43,6 +47,17 @@ class Bot:
         self.extensions: List[ExtProtocol] = []
 
         self._plugins: Dict[str, Plugin] = {}
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(
+        self,
+        *args,
+    ) -> None:
+        if not self.gateway.is_closed:
+            await self.close()
+
 
     async def pre_ready(self):
         """
@@ -81,14 +96,14 @@ class Bot:
 
     def load_extension(self, extension: str):
         if extension in self.extensions:
-            raise ValueError("Extension already loaded!")
+            raise RuntimeWarning("Extension already loaded!")
 
         module = importlib.import_module(extension)
 
         ext = cast(ExtProtocol, module)
 
         if hasattr(ext, "load") is False:
-            raise ValueError("Extension is missing load function. Please fix this!")
+            raise RuntimeWarning("Extension is missing load function. Please fix this!")
 
         ext.load(self)
 
@@ -96,14 +111,14 @@ class Bot:
 
     def remove_extension(self, extension: str):
         if extension not in self.extensions:
-            raise ValueError("Extension not loaded!")
+            raise RuntimeWarning("Extension not loaded!")
 
         module = importlib.import_module(extension)
 
         ext = cast(ExtProtocol, module)
 
         if hasattr(ext, "load") is False:
-            raise ValueError("Extension is missing remove function.")
+            raise RuntimeWarning("Extension is missing remove function.")
 
         ext.remove(self)
 
@@ -159,9 +174,22 @@ class Bot:
         try:
             asyncio.run(self.start())
         except (KeyboardInterrupt, RuntimeError):
-            asyncio.run(self.close())
+            return
 
     async def close(self):
+        if self.purge_slash:
+            api_commands = await self.http.get_app_commands()
+
+            for command in api_commands:
+                for cached_command in self._slash_commands:
+                    _log.info(cached_command)
+                    if command["name"] != cached_command["name"]: # type: ignore
+                        await self.http.delete_app_command(command)
+                        continue
+                    else:
+                        continue
+
+                    
         for ext in self.extensions:
             ext.remove(self)
 

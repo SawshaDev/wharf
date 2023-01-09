@@ -258,6 +258,8 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
                     await self.send(self.ping_payload)
 
                 elif self.gateway_payload["op"] == OPCodes.RECONNECT:
+                    _log.info("Gateway is reconnected! <3")
+
                     await self.close(code=1012)
                     return
 

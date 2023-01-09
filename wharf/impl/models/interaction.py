@@ -34,7 +34,7 @@ class InteractionOption:
 
 
 class Interaction:
-    def __init__(self, cache: Cache, payload: dict):
+    def __init__(self, payload: Dict[str, Any], cache: Cache):
         self.cache = cache
         self.payload = payload
         self.id = payload["id"]

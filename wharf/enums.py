@@ -10,11 +10,13 @@ class Status(Enum):
 
 class InteractionOptionType(Enum):
     string = 3
-    number = 4
+    integer = 4
+    boolean = 5
     user = 6
     channel = 7
     role = 8
-    attachment = 10
+    mentionable = 9
+    attachment = 11
 
 
 class ActivityType(Enum):
