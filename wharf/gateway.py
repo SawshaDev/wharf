@@ -211,8 +211,12 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
                             "resume_gateway_url"
                         ]
 
+                    
+                    if self.gateway_payload["t"] == "RESUMED":
+                        _log.info("RESUMED!")
+
                     # As messy as this all is, this probably is best here.
-                    if self.gateway_payload["t"] == "GUILD_CREATE":
+                    elif self.gateway_payload["t"] == "GUILD_CREATE":
                         if self.url == self.resume_url:
                             continue
                         else:

@@ -13,3 +13,4 @@ from .http import *
 from .impl import *
 from .intents import *
 from .plugin import *
+from .commands import *
