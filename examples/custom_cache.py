@@ -22,7 +22,7 @@ class MyCache(
 
 # Now you can actually start defining your bot!
 bot = wharf.Bot(
-    token="SomeToken", intents=wharf.Intents.MESSAGE_CONTENT, cache=MyCache
+    token="SomeToken", intents=wharf.Intents.all(), cache=MyCache
 )  # You dont have to initalize the cache here as this is already done internally!
 
 
