@@ -4,8 +4,16 @@ import asyncio
 import inspect
 import logging
 from collections import defaultdict
-from typing import (TYPE_CHECKING, Any, Callable, Coroutine, Dict, List,
-                    Optional, TypeVar)
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Coroutine,
+    Dict,
+    List,
+    Optional,
+    TypeVar,
+)
 
 from .impl import Guild, Interaction, Member, Message
 
