@@ -205,58 +205,64 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
 
             if res and self.gateway_payload is not None:
                 if self.gateway_payload["op"] == OPCodes.DISPATCH:
-                    if self.gateway_payload["t"] == "READY":
-                        self.session_id = self.gateway_payload["d"]["session_id"]
-                        self.resume_url = self.gateway_payload["d"][
+                    event_data = self.gateway_payload["d"]
+                    event_name = self.gateway_payload["t"]
+
+                    if event_name == "READY":
+                        self.session_id = event_data["session_id"]
+                        self.resume_url = event_data[
                             "resume_gateway_url"
                         ]
 
                     
-                    if self.gateway_payload["t"] == "RESUMED":
+                    if event_name == "RESUMED":
                         _log.info("RESUMED!")
+                    
 
-                    # As messy as this all is, this probably is best here.
-                    elif self.gateway_payload["t"] == "GUILD_CREATE":
-                        if self.url == self.resume_url:
-                            continue
-                        else:
-                            asyncio.create_task(
-                                self._cache._handle_guild_caching(
-                                    self.gateway_payload["d"]
-                                )
+                # As messy as this all is, this probably is best here.
+                    if event_name == "GUILD_CREATE":
+                        asyncio.create_task(
+                            self._cache._handle_guild_caching(
+                                event_data
                             )
-
-                    elif self.gateway_payload["t"] == "GUILD_MEMBER_ADD":
+                        )
+                    
+                    elif event_name == "GUILD_MEMBER_ADD":
                         self._cache.add_member(
-                            int(self.gateway_payload["d"]["guild_id"]),
-                            self.gateway_payload["d"],
+                            int(event_data["guild_id"]),
+                            event_data,
                         )
+                    
+                    elif event_name == "GUILD_DELETE":
+                        self._cache.remove_guild(int(event_data["id"]))
 
-                    elif self.gateway_payload["t"] == "GUILD_DELETE":
-                        self._cache.remove_guild(int(self.gateway_payload["d"]["id"]))
-
-                    elif self.gateway_payload["t"] == "GUILD_MEMBER_REMOVE":
+                    elif event_name == "GUILD_MEMBER_REMOVE":
                         self._cache.remove_member(
-                            int(self.gateway_payload["d"]["guild_id"]),
-                            int(self.gateway_payload["d"]["user"]["id"]),
+                            int(event_data["guild_id"]),
+                            int(event_data["user"]["id"]),
                         )
 
-                    elif self.gateway_payload["t"] == "CHANNEL_DELETE":
+                    elif event_name == "CHANNEL_DELETE":
                         self._cache.remove_channel(
-                            int(self.gateway_payload["d"]["guild_id"]),
-                            int(self.gateway_payload["d"]["id"]),
+                            int(event_data["guild_id"]),
+                            int(event_data["id"]),
                         )
 
+
+                    if (
+                        event_name.lower()
+                        not in self._dispatcher.events.keys()
+                    ):
+                        continue
+                    
+                    
+                    try:
+                        event = self._dispatcher.event_parsers[event_name]
+                    except KeyError:
+                        _log.info(event_name.lower())
+                        self._dispatcher.dispatch(event_name.lower(), event_data)
                     else:
-                        if (
-                            self.gateway_payload["t"].lower()
-                            not in self._dispatcher.events.keys()
-                        ):
-                            continue
-
-                        self._dispatcher.dispatch(
-                            self.gateway_payload["t"].lower(), self.gateway_payload["d"]
-                        )
+                        event(event_data)
 
                 elif self.gateway_payload["op"] == OPCodes.HEARTBEAT:
                     await self.send(self.ping_payload)

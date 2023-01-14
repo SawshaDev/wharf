@@ -15,7 +15,7 @@ from typing import (
     TypeVar,
 )
 
-from .impl import Interaction, Member, Message
+from .impl import Interaction, Member, Message, Guild
 
 if TYPE_CHECKING:
     from .impl.cache import Cache
@@ -33,27 +33,12 @@ class Dispatcher:
         self.events: Dict[str, List[CoroFunc]] = defaultdict(list)
         self.cache = cache
 
-    def filter_events(self, event_type: str, event_data: Dict[str, Any]):
-        self.event_map = {
-            "message_create": Message,
-            "message_edit": Message,
-            "interaction_create": Interaction,
-            "guild_members_add": Member,
-            "guild_members_remove": Member,
-        }
+        self.event_parsers: Dict[str, Any] = {}
 
-        if event_data is None:
-            raise ValueError("Event data CANNOT be None")
+        for attr, func in inspect.getmembers(self):
+            if attr.startswith("parse_"):
+                self.event_parsers[attr[6:].upper()] = func
 
-        if event_type == "ready":
-            return None
-
-        event_object = self.event_map.get(event_type)
-
-        if event_object is None:
-            return event_data
-        
-        return event_object(event_data, self.cache)
 
     def add_callback(self, event_name: str, func: CoroFunc):
         self.events[event_name].append(func)
@@ -68,19 +53,32 @@ class Dispatcher:
     def get_event(self, event_name: str):
         return self.events.get(event_name)
 
-    def dispatch(self, event_name: str, data: Optional[Any] = None):
+    def dispatch(self, event_name: str, *args, **kwargs):
         event = self.get_event(event_name)
 
         if event is None:
             raise ValueError("Event not in any events known :(")
 
-        if data  is not None:
-            data = self.filter_events(event_name, data)
 
         for callback in event:
-            if data is None:
-                asyncio.create_task(callback())
-            else:
-                asyncio.create_task(callback(data))
+            asyncio.create_task(callback(*args, **kwargs))
 
         _log.info("Dispatched event %r", event_name)
+
+ 
+    
+    def parse_ready(self, data):
+        self.dispatch("ready")
+
+    def parse_interaction_create(self, data: Dict[str, Any]):
+        interaction = Interaction(data, self.cache)
+
+        self.dispatch("interaction_create", interaction)
+
+    def parse_guild_create(self, data: Dict[str, Any]):
+        guild = self.cache.add_guild(data)
+
+        self.dispatch("guild_create", guild)
+
+
+

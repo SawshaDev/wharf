@@ -26,6 +26,7 @@ class Guild:
         self.id: int = int(guild["id"])
         self.icon_hash = guild.get("icon")
         self.banner_hash = guild.get("banner")
+        self.unavailable = guild.get("unavailable")
 
     async def fetch_member(self, member_id: int):
         return Member(await self.cache.http.get_member(member_id, self.id), self.cache)

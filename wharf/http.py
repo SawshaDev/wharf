@@ -12,7 +12,8 @@ from . import __version__
 from .enums import MessageFlags
 from .errors import BucketMigrated, HTTPException, NotFound
 from .file import File
-from .impl import Embed, InteractionCommand
+from .impl import Embed
+from .commands import InteractionCommand
 from .impl.ratelimit import Ratelimiter
 
 _log = logging.getLogger(__name__)

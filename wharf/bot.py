@@ -13,7 +13,8 @@ from .errors import GatewayReconnect
 from .file import File
 from .gateway import Gateway
 from .http import HTTPClient
-from .impl import Guild, InteractionCommand, User, check_channel_type
+from .impl import Guild, User, check_channel_type
+from .commands import InteractionCommand
 from .impl.cache import Cache
 from .intents import Intents
 from .plugin import Plugin
