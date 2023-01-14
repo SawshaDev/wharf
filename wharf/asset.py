@@ -55,7 +55,7 @@ class Asset:
     def _from_guild_icon(cls, cache: Cache, guild_id: int, icon_hash: str):
         animated = icon_hash.startswith("a_")
         format = "gif" if animated else "png"
-        
+
         return cls(
             cache=cache,
             url=f"{cls.BASE_URL}/icons/{guild_id}/{icon_hash}.{format}?size=1024",

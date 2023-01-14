@@ -7,19 +7,20 @@ import sys
 from typing import Dict, List, Optional, Protocol, Union, cast
 
 from .activities import Activity
+from .commands import InteractionCommand
 from .dispatcher import CoroFunc, Dispatcher
 from .enums import Status
 from .errors import GatewayReconnect
 from .file import File
 from .gateway import Gateway
 from .http import HTTPClient
-from .impl import Guild, InteractionCommand, User, check_channel_type
+from .impl import Guild, User, check_channel_type
 from .impl.cache import Cache
 from .intents import Intents
 from .plugin import Plugin
 
-
 _log = logging.getLogger(__name__)
+
 
 class ExtProtocol(Protocol):
     def load(self, bot: Bot):
@@ -57,7 +58,6 @@ class Bot:
     ) -> None:
         if not self.gateway.is_closed:
             await self.close()
-
 
     async def pre_ready(self):
         """
@@ -183,13 +183,12 @@ class Bot:
             for command in api_commands:
                 for cached_command in self._slash_commands:
                     _log.info(cached_command)
-                    if command["name"] != cached_command["name"]: # type: ignore
+                    if command["name"] != cached_command["name"]:  # type: ignore
                         await self.http.delete_app_command(command)
                         continue
                     else:
                         continue
 
-                    
         for ext in self.extensions:
             ext.remove(self)
 

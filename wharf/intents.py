@@ -118,6 +118,7 @@ class Flag(metaclass=FlagMeta):
     def none(cls: type[Self]) -> Self:
         return cls.from_value(cls.default_value)
 
+
 class Intents(Flag):
     if t.TYPE_CHECKING:
 

@@ -9,10 +9,11 @@ from urllib.parse import quote as urlquote
 import aiohttp
 
 from . import __version__
+from .commands import InteractionCommand
 from .enums import MessageFlags
 from .errors import BucketMigrated, HTTPException, NotFound
 from .file import File
-from .impl import Embed, InteractionCommand
+from .impl import Embed
 from .impl.ratelimit import Ratelimiter
 
 _log = logging.getLogger(__name__)
@@ -93,7 +94,7 @@ class HTTPClient:
         if resp.content_type == "application/json":
             return json.loads(text)
 
-        return text # type: ignore
+        return text  # type: ignore
 
     @staticmethod
     def _prepare_data(data: Optional[dict[str, Any]], files: Optional[List[File]]):

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import Optional, List, Any, Dict
+from typing import Any, Dict, List, Optional
 
 from .enums import InteractionOptionType
+
 
 class CommandOption:
     def __init__(self, name: str, description: str, type: int, required: bool):
@@ -10,6 +11,7 @@ class CommandOption:
         self.description = description
         self.type = type
         self.required = required
+
 
 class InteractionCommand:
     def __init__(self, *, name: str, description: Optional[str] = None):
@@ -56,6 +58,7 @@ class InteractionCommand:
         description = payload["data"].get("description", "")
 
         return cls(name=name, description=description)
+
 
 class InteractionOption:
     def __init__(self, payload: dict):

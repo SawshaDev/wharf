@@ -25,6 +25,8 @@ class Cache:
         self.channels: Dict[int, Dict[int, TextChannel]] = {}
         self.roles: Dict[int, Dict[int, Role]] = {}
 
+        self.cache_done: bool = False
+
     def remove_guild(self, guild_id: int) -> None:
         guild = self.get_guild(guild_id)
         assert guild is not None
@@ -181,3 +183,4 @@ class Cache:
         self.add_guild(data)
         _log.info("Populating guild %s's cache", data["id"])
         await self.populate_server(int(data["id"]))
+        self.cache_done = True
