@@ -16,7 +16,7 @@ class SubclassedClient(wharf.Bot):
 
 # Now we can make a class instance
 client = SubclassedClient(
-    token="SomeToken", intents=wharf.Intents.ALL
+    token="SomeToken", intents=wharf.Intents.all()
 )  # Using all intents just so everything works <3!
 
 

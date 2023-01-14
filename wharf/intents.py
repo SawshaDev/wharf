@@ -1,75 +1,231 @@
-from enum import Enum
+from __future__ import annotations
+
+import typing as t
+from collections.abc import Callable, Iterator
+from functools import reduce
+from operator import or_
+
+from typing_extensions import Self
+
+__all__ = (
+    "FlagMember",
+    "flag",
+    "FlagMeta",
+    "Flag",
+)
 
 
-class Intents(Enum):
+class FlagMember:
+    def __init__(self, name: str, value: int):
+        self._name_ = name
+        self._value_ = value
 
-    NONE = 0
-    GUILDS = 1 << 0
-    GUILD_MEMBERS = 1 << 1
-    GUILD_BANS = 1 << 2
-    GUILD_EMOJIS = 1 << 3
-    GUILD_INTEGRATIONS = 1 << 4
-    GUILD_WEBHOOKS = 1 << 5
-    GUILD_INVITES = 1 << 6
-    GUILD_VOICE_STATES = 1 << 7
-    GUILD_PRESENCES = 1 << 8
-    GUILD_MESSAGES = 1 << 9
-    GUILD_MESSAGE_REACTIONS = 1 << 10
-    GUILD_MESSAGE_TYPING = 1 << 11
-    DIRECT_MESSAGES = 1 << 12
-    DIRECT_MESSAGE_REACTIONS = 1 << 13
-    DIRECT_MESSAGE_TYPING = 1 << 14
-    MESSAGE_CONTENT = 1 << 15
-    GUILD_SCHEDULED_EVENTS = 1 << 16
+    def __get__(self, instance: t.Optional[Flag], _: type[Flag]) -> t.Union[int, bool]:
+        if instance:
+            return instance.has(self.value)
+        return self.value
 
-    ALL_GUILDS_UNPRIVILEGED = (
-        GUILDS
-        | GUILD_BANS
-        | GUILD_EMOJIS
-        | GUILD_INTEGRATIONS
-        | GUILD_WEBHOOKS
-        | GUILD_INVITES
-        | GUILD_VOICE_STATES
-        | GUILD_MESSAGES
-        | GUILD_MESSAGE_REACTIONS
-        | GUILD_MESSAGE_TYPING
-        | GUILD_SCHEDULED_EVENTS
-    )
-
-    ALL_GUILDS_PRIVILEGED = GUILD_MEMBERS | GUILD_PRESENCES
-    """All privileged guild intents.
-    !!! warning
-        This set of intent is privileged, and requires enabling/whitelisting to
-        use.
-    """
-
-    ALL_GUILDS = ALL_GUILDS_UNPRIVILEGED | ALL_GUILDS_PRIVILEGED
-    """All unprivileged guild intents and all privileged guild intents.
-    This combines `Intents.ALL_GUILDS_UNPRIVILEGED` and
-    `Intents.ALL_GUILDS_PRIVILEGED`.
-    !!! warning
-        This set of intent is privileged, and requires enabling/whitelisting to
-        use.
-    """
-
-    ALL_DMS = DIRECT_MESSAGES | DIRECT_MESSAGE_TYPING | DIRECT_MESSAGE_REACTIONS
-    """All private message channel (non-guild bound) intents."""
-
-    ALL_MESSAGES = DIRECT_MESSAGES | GUILD_MESSAGES
-
-    ALL_MESSAGE_REACTIONS = DIRECT_MESSAGE_REACTIONS | GUILD_MESSAGE_REACTIONS
-
-    ALL_MESSAGE_TYPING = DIRECT_MESSAGE_TYPING | GUILD_MESSAGE_TYPING
-
-    ALL_UNPRIVILEGED = ALL_GUILDS_UNPRIVILEGED | ALL_DMS
-
-    ALL_PRIVILEGED = ALL_GUILDS_PRIVILEGED | MESSAGE_CONTENT
-
-    ALL = ALL_UNPRIVILEGED | ALL_PRIVILEGED
+    def __set__(self, instance: t.Optional[Flag], toggle: bool) -> None:
+        if instance:
+            instance.set(self.value, toggle)
 
     @property
-    def is_privileged(self) -> bool:
-        return bool(self & self.ALL_PRIVILEGED)
+    def name(self) -> str:
+        return self._name_
 
-    def __int__(self) -> int:
-        return self.value
+    @property
+    def value(self) -> int:
+        return self._value_
+
+
+def flag(func: Callable[..., int]) -> FlagMember:
+    return FlagMember(func.__name__, func())
+
+
+class FlagMeta(type):
+    _default_value: int
+    __members__: dict[str, FlagMember]
+
+    def __new__(
+        cls: type[Self],
+        name: str,
+        bases: tuple[type, ...],
+        classdict: dict[str, t.Any],
+        **kwds: t.Any,
+    ) -> Self:
+        member_map: dict[str, FlagMember] = {
+            n: v for n, v in classdict.items() if isinstance(v, FlagMember)
+        }
+
+        default_value: int = 0
+        if kwds.pop("inverted", False):
+            max_bits = max([fm.value for fm in member_map.values()]).bit_length()
+            default_value = (2**max_bits) - 1
+
+        ns: dict[str, t.Any] = {
+            "__members__": member_map,
+            "_default_value": default_value,
+            **classdict,
+        }
+
+        return super().__new__(cls, name, bases, ns, **kwds)
+
+    @property
+    def default_value(cls) -> int:
+        return cls._default_value
+
+
+class Flag(metaclass=FlagMeta):
+    value: int
+    _default_value: t.ClassVar[int]
+    __members__: t.ClassVar[dict[str, FlagMember]]
+
+    def __init__(self, **kwds: bool):
+        self.value = type(self).default_value
+
+        for flag_name, enabled in kwds.items():
+            if hasattr(self, flag_name) and flag_name in self.__members__:
+                self.set(self.__members__[flag_name].value, enabled)
+            else:
+                raise ValueError(f"Invalid flag member {flag_name}!")
+
+    def set(self, value: int, toggle: bool):
+        if toggle:
+            self.value |= value
+        else:
+            self.value &= ~value
+
+    def has(self, value: int):
+        return self.value & value == value
+
+    def __iter__(self) -> Iterator[tuple[str, bool]]:
+        for name in self.__members__:
+            yield name, getattr(self, name)
+
+    @classmethod
+    def from_value(cls: type[Self], value: int) -> Self:
+        self = cls()
+        self.value = value
+        return self
+
+    @classmethod
+    def all(cls: type[Self]) -> Self:
+        member_vals = [f.value for f in cls.__members__.values()]
+        all_values = reduce(or_, member_vals)
+        return cls.from_value(all_values)
+
+    @classmethod
+    def none(cls: type[Self]) -> Self:
+        return cls.from_value(cls.default_value)
+
+class Intents(Flag):
+    if t.TYPE_CHECKING:
+
+        def __init__(
+            self,
+            *,
+            guilds: bool = ...,
+            guild_members: bool = ...,
+            guild_bans: bool = ...,
+            guild_emojis_and_stickers: bool = ...,
+            guild_integrations: bool = ...,
+            guild_webhooks: bool = ...,
+            guild_invites: bool = ...,
+            guild_voice_states: bool = ...,
+            guild_presences: bool = ...,
+            guild_messages: bool = ...,
+            guild_message_reactions: bool = ...,
+            guild_message_typing: bool = ...,
+            direct_messages: bool = ...,
+            direct_message_reactions: bool = ...,
+            direct_message_typing: bool = ...,
+            message_content: bool = ...,
+            guild_scheduled_events: bool = ...,
+            auto_moderation_configuration: bool = ...,
+            automod_execution: bool = ...,
+        ) -> None:
+            ...
+
+    @flag
+    def GUILDS():
+        return 1 << 0
+
+    @flag
+    def GUILD_MEMBERS():
+        return 1 << 1
+
+    @flag
+    def GUILD_BANS():
+        return 1 << 2
+
+    @flag
+    def GUILD_EMOJIS_AND_STICKERS():
+        return 1 << 3
+
+    @flag
+    def GUILD_INTEGRATIONS():
+        return 1 << 4
+
+    @flag
+    def GUILD_WEBHOOKS():
+        return 1 << 5
+
+    @flag
+    def GUILD_INVITES():
+        return 1 << 6
+
+    @flag
+    def GUILD_VOICE_STATES():
+        return 1 << 7
+
+    @flag
+    def GUILD_PRESENCES():
+        return 1 << 8
+
+    @flag
+    def GUILD_MESSAGES():
+        return 1 << 9
+
+    @flag
+    def GUILD_MESSAGE_REACTIONS():
+        return 1 << 10
+
+    @flag
+    def GUILD_MESSAGE_TYPING():
+        return 1 << 11
+
+    @flag
+    def DIRECT_MESSAGES():
+        return 1 << 12
+
+    @flag
+    def DIRECT_MESSAGE_REACTIONS():
+        return 1 << 13
+
+    @flag
+    def DIRECT_MESSAGE_TYPING():
+        return 1 << 14
+
+    @flag
+    def MESSAGE_CONTENT():
+        return 1 << 15
+
+    @flag
+    def GUILD_SCHEDULED_EVENTS():
+        return 1 << 16
+
+    @flag
+    def AUTO_MODERATION_CONFIGURATION():
+        return 1 << 20
+
+    @flag
+    def AUTO_MODERATION_EXECUTION():
+        return 1 << 21
+
+    @classmethod
+    def default(cls: type[Self]) -> Self:
+        self = cls.all()
+        self.GUILD_MEMBERS = False
+        self.GUILD_PRESENCES = False
+        self.MESSAGE_CONTENT = False
+        return self
