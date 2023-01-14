@@ -13,3 +13,5 @@ I see how you can think that but no. wharf was made entirely from scratch but th
 You can find a list of all gateway events at [The discord docs](https://discord.com/developers/docs/topics/gateway-events)!<br>
 we use the gateway event names discord gives us in the docs such as ``message_create``, ``guild_create``, or ``interaction_create``.
 We support all events but some of the events use the raw json from the gateway instead of proper models **for now**.
+
+Warning: The event ``guild_create`` will always be called on startup due to how discord does events, i am currently trying to find a way to make this not happen but i have not figured out anything. I'd say just deal with this until then :thumbsup:
