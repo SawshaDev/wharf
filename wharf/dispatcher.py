@@ -4,18 +4,10 @@ import asyncio
 import inspect
 import logging
 from collections import defaultdict
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Coroutine,
-    Dict,
-    List,
-    Optional,
-    TypeVar,
-)
+from typing import (TYPE_CHECKING, Any, Callable, Coroutine, Dict, List,
+                    Optional, TypeVar)
 
-from .impl import Interaction, Member, Message, Guild
+from .impl import Guild, Interaction, Member, Message
 
 if TYPE_CHECKING:
     from .impl.cache import Cache
@@ -39,7 +31,6 @@ class Dispatcher:
             if attr.startswith("parse_"):
                 self.event_parsers[attr[6:].upper()] = func
 
-
     def add_callback(self, event_name: str, func: CoroFunc):
         self.events[event_name].append(func)
 
@@ -59,14 +50,11 @@ class Dispatcher:
         if event is None:
             raise ValueError("Event not in any events known :(")
 
-
         for callback in event:
             asyncio.create_task(callback(*args, **kwargs))
 
         _log.info("Dispatched event %r", event_name)
 
- 
-    
     def parse_ready(self, data):
         self.dispatch("ready")
 
@@ -79,6 +67,3 @@ class Dispatcher:
         guild = self.cache.add_guild(data)
 
         self.dispatch("guild_create", guild)
-
-
-

@@ -8,10 +8,9 @@ from ...enums import InteractionOptionType, MessageFlags
 from ...file import File
 
 if TYPE_CHECKING:
+    from ...commands import InteractionCommand, InteractionOption
     from ..cache import Cache
     from ..models import Embed
-    from ...commands import InteractionCommand, InteractionOption
-
 
 
 class Interaction:
@@ -97,4 +96,3 @@ class Interaction:
             for option in self.payload["data"].get("options"):
                 option = InteractionOption(option)
                 self.options.append(option)
-

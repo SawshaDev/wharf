@@ -210,29 +210,23 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
 
                     if event_name == "READY":
                         self.session_id = event_data["session_id"]
-                        self.resume_url = event_data[
-                            "resume_gateway_url"
-                        ]
+                        self.resume_url = event_data["resume_gateway_url"]
 
-                    
                     if event_name == "RESUMED":
                         _log.info("RESUMED!")
-                    
 
-                # As messy as this all is, this probably is best here.
+                    # As messy as this all is, this probably is best here.
                     if event_name == "GUILD_CREATE":
                         asyncio.create_task(
-                            self._cache._handle_guild_caching(
-                                event_data
-                            )
+                            self._cache._handle_guild_caching(event_data)
                         )
-                    
+
                     elif event_name == "GUILD_MEMBER_ADD":
                         self._cache.add_member(
                             int(event_data["guild_id"]),
                             event_data,
                         )
-                    
+
                     elif event_name == "GUILD_DELETE":
                         self._cache.remove_guild(int(event_data["id"]))
 
@@ -248,14 +242,9 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
                             int(event_data["id"]),
                         )
 
-
-                    if (
-                        event_name.lower()
-                        not in self._dispatcher.events.keys()
-                    ):
+                    if event_name.lower() not in self._dispatcher.events.keys():
                         continue
-                    
-                    
+
                     try:
                         event = self._dispatcher.event_parsers[event_name]
                     except KeyError:
