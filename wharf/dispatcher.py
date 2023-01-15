@@ -75,3 +75,8 @@ class Dispatcher:
         guild = self.cache.add_guild(data)
 
         self.dispatch("guild_create", guild)
+
+    def parse_message_create(self, data: Dict[str, Any]):
+        message = Message(data, self.cache)
+
+        self.dispatch("message_create", message)

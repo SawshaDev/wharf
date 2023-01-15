@@ -216,12 +216,7 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
                         _log.info("RESUMED!")
 
                     # As messy as this all is, this probably is best here.
-                    if event_name == "GUILD_CREATE":
-                        asyncio.create_task(
-                            self._cache._handle_guild_caching(event_data)
-                        )
-
-                    elif event_name == "GUILD_MEMBER_ADD":
+                    if event_name == "GUILD_MEMBER_ADD":
                         self._cache.add_member(
                             int(event_data["guild_id"]),
                             event_data,
