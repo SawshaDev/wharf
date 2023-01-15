@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from ..cache import Cache
     from .embed import Embed
     from ...file import File
+    from .member import Member
 
 
 class Message:
@@ -20,7 +21,7 @@ class Message:
 
     def _from_data(self, message: Dict[str, str]):
         self._content = message["content"]
-        self._author_id = message["author"]["id"]  # type: ignore
+        self._author_id = int(message["author"]["id"])  # type: ignore
         self._channel_id = message["channel_id"]
 
         if message.get("guild_id") is not None:
@@ -37,8 +38,12 @@ class Message:
         return self._content
 
     @property
-    def author(self) -> Optional[User]:
+    def user(self) -> Optional[User]:
         return self.cache.get_user(self._author_id)
+
+    @property
+    def member(self) -> Optional[Member]:
+        return self.cache.get_member(self._guild_id, self._author_id)
 
     @property
     def channel_id(self) -> int:
