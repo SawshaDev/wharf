@@ -49,9 +49,7 @@ class Route:
     @property
     def endpoint(self) -> str:
         """The formatted url for this route."""
-        return self.url.format_map(
-            {k: urlquote(str(v)) for k, v in self.params.items()}
-        )
+        return self.url.format_map({k: urlquote(str(v)) for k, v in self.params.items()})
 
     @property
     def bucket(self) -> str:
@@ -61,9 +59,7 @@ class Route:
             for k in ("guild_id", "channel_id", "webhook_id", "webhook_token")
             if getattr(self, k) is not None
         }
-        other_params = {
-            k: None for k in self.params.keys() if k not in top_level_params.keys()
-        }
+        other_params = {k: None for k in self.params.keys() if k not in top_level_params.keys()}
 
         return f"{self.method}:{self.url.format_map(top_level_params | other_params)}"
 
@@ -79,9 +75,7 @@ class HTTPClient:
         self.req_id = 0
 
     def login(self, token: str, intents: int):
-        self._session = aiohttp.ClientSession(
-            headers={"User-Agent": self.user_agent}, json_serialize=json.dumps
-        )
+        self._session = aiohttp.ClientSession(headers={"User-Agent": self.user_agent}, json_serialize=json.dumps)
 
         self._token = token
         self._intents = intents
@@ -106,9 +100,7 @@ class HTTPClient:
         if data is not None and files is not None:
             form_dat = aiohttp.FormData()
 
-            form_dat.add_field(
-                "payload_json", f"{json.dumps(data)}", content_type="application/json"
-            )
+            form_dat.add_field("payload_json", f"{json.dumps(data)}", content_type="application/json")
 
             for count, file in enumerate(files):
                 form_dat.add_field(f"files[{count}]", file.fp, filename=file.filename)
@@ -178,9 +170,7 @@ class HTTPClient:
                         if "Via" not in response.headers:
                             # cloudflare fucked us. :(
 
-                            raise HTTPException(
-                                response, await self._text_or_json(response)
-                            )
+                            raise HTTPException(response, await self._text_or_json(response))
 
                         is_global = response.headers["X-RateLimit-Scope"] == "global"
 
@@ -211,9 +201,7 @@ class HTTPClient:
                         continue
 
                     if response.status >= 400:
-                        raise HTTPException(
-                            response, await self._text_or_json(response)
-                        )
+                        raise HTTPException(response, await self._text_or_json(response))
 
     async def get_gateway_bot(self):
         return await self.request(Route("GET", "/gateway/bot"))
@@ -229,9 +217,7 @@ class HTTPClient:
     async def delete_app_command(self, payload):
         me = await self.get_me()
 
-        return await self.request(
-            Route("DELETE", f"/applications/{me['id']}/commands/{payload['id']}")
-        )
+        return await self.request(Route("DELETE", f"/applications/{me['id']}/commands/{payload['id']}"))
 
     async def get_app_commands(self):
         me = await self.get_me()
@@ -239,9 +225,7 @@ class HTTPClient:
         return await self.request(Route("GET", f"/applications/{me['id']}/commands"))
 
     def get_guild_members(self, guild_id: int, limit: int = 1000):
-        return self.request(
-            Route("GET", f"/guilds/{guild_id}/members"), query_params={"limit": limit}
-        )
+        return self.request(Route("GET", f"/guilds/{guild_id}/members"), query_params={"limit": limit})
 
     def get_guild_channels(self, guild_id: int):
         return self.request(Route("GET", f"/guilds/{guild_id}/channels"))
@@ -372,17 +356,13 @@ class HTTPClient:
     def get_guild(self, guild_id: int):
         return self.request(Route("GET", f"/guilds/{guild_id}"))
 
-    async def edit_guild(
-        self, guild_id: int, *, name: Optional[str] = None
-    ) -> Dict[str, Any]:
+    async def edit_guild(self, guild_id: int, *, name: Optional[str] = None) -> Dict[str, Any]:
         payload = {}
 
         if name is not None:
             payload["name"] = name
 
-        resp = await self.request(
-            Route("PATCH", f"/guilds/{guild_id}"), json_params=payload
-        )
+        resp = await self.request(Route("PATCH", f"/guilds/{guild_id}"), json_params=payload)
 
         return resp
 

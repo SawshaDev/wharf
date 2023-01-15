@@ -102,6 +102,4 @@ class Guild:
     def banner(self) -> Optional[Asset]:
         if self.banner_hash is None:
             return None
-        return Asset._from_guild_image(
-            self.cache, self.id, self.banner_hash, path="banners"
-        )
+        return Asset._from_guild_image(self.cache, self.id, self.banner_hash, path="banners")

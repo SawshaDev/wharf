@@ -3,21 +3,15 @@
 import wharf  # First you import wharf obviously
 
 
-class MyCache(
-    wharf.impl.Cache
-):  # Then now you can create your subclass of ``wharf.impl.Cache``
+class MyCache(wharf.impl.Cache):  # Then now you can create your subclass of ``wharf.impl.Cache``
     def __init__(
         self, http: wharf.HTTPClient
     ):  # This is needed but dw about having to access your bot classes http, this gets auto filled in internally!
         # The http arg in the init should ALWAYS be positional and not a kwarg
-        super().__init__(
-            http
-        )  # Gotta do a super init so the class can actually function
+        super().__init__(http)  # Gotta do a super init so the class can actually function
 
     def get_user(self, user: int):
-        print(
-            self.users.get(user)
-        )  # Now you can overwrite any function and do anything you want!
+        print(self.users.get(user))  # Now you can overwrite any function and do anything you want!
 
 
 # Now you can actually start defining your bot!

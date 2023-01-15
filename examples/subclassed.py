@@ -5,9 +5,7 @@ import wharf
 
 # Now you can actually start subclassing
 class SubclassedClient(wharf.Bot):
-    def __init__(
-        self, token: str, intents: wharf.Intents
-    ):  # Gotta make sure to include an __init__!
+    def __init__(self, token: str, intents: wharf.Intents):  # Gotta make sure to include an __init__!
         super().__init__(token=token, intents=intents)
 
         # Now we can actually define an attribute
@@ -15,9 +13,7 @@ class SubclassedClient(wharf.Bot):
 
 
 # Now we can make a class instance
-client = SubclassedClient(
-    token="SomeToken", intents=wharf.Intents.all()
-)  # Using all intents just so everything works <3!
+client = SubclassedClient(token="SomeToken", intents=wharf.Intents.all())  # Using all intents just so everything works <3!
 
 
 @client.listen("ready")

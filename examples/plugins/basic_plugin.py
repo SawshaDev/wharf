@@ -2,20 +2,16 @@
 import wharf
 
 # First define the plugin
-myplugin = wharf.Plugin(
-    name="hi", description="hi!!"
-)  # You can name it whatever you want
+myplugin = wharf.Plugin(name="hi", description="hi!!")  # You can name it whatever you want
 
 
-@myplugin.listen(
-    "message_create"
-)  # You can define listeners using the listen decorator
+@myplugin.listen("message_create")  # You can define listeners using the listen decorator
 async def message_create(message: wharf.Message):
     if message.content == "ping":
         await message.send("Pong!")
 
 
-bot = wharf.Bot(token="SomeToken", intents=wharf.Intents.MESSAGE_CONTENT)
+bot = wharf.Bot(token="SomeToken", intents=wharf.Intents.MESSAGE_CONTENT)  # type: ignore
 
 bot.add_plugin(myplugin)  # You add plugins using the add_plugin function in your bot
 

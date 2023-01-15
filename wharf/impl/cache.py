@@ -96,9 +96,7 @@ class Cache:
 
         return guild
 
-    def get_channel(
-        self, guild_id: int, channel_id: int
-    ) -> Optional[Union[TextChannel, DMChannel]]:
+    def get_channel(self, guild_id: int, channel_id: int) -> Optional[Union[TextChannel, DMChannel]]:
         return self.channels[guild_id].get(channel_id)
 
     def add_channel(self, guild_id: int, payload: Dict[str, Any]) -> TextChannel:
@@ -183,4 +181,3 @@ class Cache:
         self.add_guild(data)
         _log.info("Populating guild %s's cache", data["id"])
         await self.populate_server(int(data["id"]))
-

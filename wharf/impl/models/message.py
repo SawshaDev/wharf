@@ -28,8 +28,6 @@ class Message:
         if message.get("guild_id") is not None:
             self._guild_id = int(message.get("guild_id"))  # type: ignore
 
-        
-
     @property
     def guild(self) -> Optional[Guild]:
         return self.cache.get_guild(self._guild_id)
@@ -51,5 +49,5 @@ class Message:
         return int(self._channel_id)
 
     async def send(self, content: str, embed: Optional[Embed] = None, file: Optional[File] = None):
-        msg = await self.cache.http.send_message(self.channel_id, content=content,embed=embed, file=file)
+        msg = await self.cache.http.send_message(self.channel_id, content=content, embed=embed, file=file)
         return Message(msg, self.cache)

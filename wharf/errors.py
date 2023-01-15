@@ -16,9 +16,7 @@ class WebsocketClosed(Exception):
         super().__init__(f"Gateway was closed with code {code}: {message}")
 
 
-def _shorten_error_dict(
-    d: dt.NestedHTTPErrorsData, parent_key: str = ""
-) -> dict[str, str]:
+def _shorten_error_dict(d: dt.NestedHTTPErrorsData, parent_key: str = "") -> dict[str, str]:
     ret_items: dict[str, str] = {}
 
     _errors = d.get("_errors")
@@ -66,9 +64,7 @@ class BucketMigrated(BaseException):
     """Represents an internal exception for when a bucket migrates."""
 
     def __init__(self, discord_hash: str):
-        super().__init__(
-            f"The current bucket was migrated to another bucket at {discord_hash}"
-        )
+        super().__init__(f"The current bucket was migrated to another bucket at {discord_hash}")
 
 
 class NotFound(HTTPException):

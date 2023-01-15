@@ -106,9 +106,7 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
             },
         }
 
-    async def _change_presence(
-        self, *, status: str, activity: Optional[Activity] = None
-    ):
+    async def _change_presence(self, *, status: str, activity: Optional[Activity] = None):
         activities = []
         if activity is not None:
             activities.append(activity.to_dict())
@@ -179,9 +177,7 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
 
         if msg and self.gateway_payload is not None:
             if self.gateway_payload["op"] == OPCodes.HELLO:
-                self.heartbeat_interval = self.gateway_payload["d"][
-                    "heartbeat_interval"
-                ]
+                self.heartbeat_interval = self.gateway_payload["d"]["heartbeat_interval"]
         else:
             # I guess Discord is having issues today if we get here
             # Disconnect and DO NOT ATTEMPT a reconnection
@@ -217,9 +213,7 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
 
                     # As messy as this all is, this probably is best here.
                     if event_name == "GUILD_CREATE":
-                        asyncio.create_task(
-                            self._cache._handle_guild_caching(event_data)
-                        )
+                        asyncio.create_task(self._cache._handle_guild_caching(event_data))
 
                     elif event_name == "GUILD_MEMBER_ADD":
                         self._cache.add_member(

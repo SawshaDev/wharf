@@ -53,9 +53,7 @@ class FlagMeta(type):
         classdict: dict[str, t.Any],
         **kwds: t.Any,
     ) -> Self:
-        member_map: dict[str, FlagMember] = {
-            n: v for n, v in classdict.items() if isinstance(v, FlagMember)
-        }
+        member_map: dict[str, FlagMember] = {n: v for n, v in classdict.items() if isinstance(v, FlagMember)}
 
         default_value: int = 0
         if kwds.pop("inverted", False):
@@ -94,6 +92,11 @@ class Flag(metaclass=FlagMeta):
             self.value |= value
         else:
             self.value &= ~value
+
+    def int(self):
+        return self.value
+
+    __int__ = int
 
     def has(self, value: int):
         return self.value & value == value

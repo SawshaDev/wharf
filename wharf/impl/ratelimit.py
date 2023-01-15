@@ -105,11 +105,7 @@ class Bucket(BurstRatelimiter):
         if self._first_update:
             self._first_update = False
 
-        if (
-            self.reset_after is not None
-            and self.remaining == 0
-            and not self.is_locked()
-        ):
+        if self.reset_after is not None and self.remaining == 0 and not self.is_locked():
             self.lock_for(self.reset_after)
 
     def migrate(self, hash: str):

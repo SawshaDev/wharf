@@ -31,9 +31,7 @@ class ExtProtocol(Protocol):
 
 
 class Bot:
-    def __init__(
-        self, *, token: str, intents: Intents, cache: Cache = Cache, purge_old_slash: bool = False  # type: ignore
-    ):
+    def __init__(self, *, token: str, intents: Intents, cache: Cache = Cache, purge_old_slash: bool = False):  # type: ignore
         self.intents = intents
         self.token = token
         self._slash_commands = []
@@ -48,6 +46,8 @@ class Bot:
         self.extensions: List[ExtProtocol] = []
 
         self._plugins: Dict[str, Plugin] = {}
+
+        self.loop = asyncio.get_event_loop()
 
     async def __aenter__(self):
         return self
@@ -66,7 +66,7 @@ class Bot:
         pass
 
     async def login(self):
-        self.http.login(self.token, self.intents.value)
+        self.http.login(self.token, self.intents.value)  # type: ignore
 
         await self.pre_ready()
 
@@ -145,9 +145,7 @@ class Bot:
 
         self._plugins.pop(plugin.name)  # type: ignore
 
-    async def change_presence(
-        self, *, status: Status, activity: Optional[Activity] = None
-    ):
+    async def change_presence(self, *, status: Status, activity: Optional[Activity] = None):
         await self.gateway._change_presence(status=status.value, activity=activity)
 
     async def fetch_user(self, user_id: int):
@@ -174,7 +172,7 @@ class Bot:
         try:
             asyncio.run(self.start())
         except (KeyboardInterrupt, RuntimeError):
-            return
+            self.loop.run_until_complete(self.close())
 
     async def close(self):
         if self.purge_slash:
