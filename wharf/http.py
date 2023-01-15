@@ -3,7 +3,7 @@ import json
 import logging
 import sys
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 from urllib.parse import quote as urlquote
 
 import aiohttp
@@ -113,8 +113,8 @@ class HTTPClient:
         self,
         route: Route,
         *,
-        query_params: Optional[dict[str, Any]] = None,
-        json_params: Optional[Dict[str, Any]] = None,
+        query_params: Optional[Dict[str, Any]] = None,
+        json_params: Optional[Union[Any, Dict[str, Any]]] = None,
         files: Optional[List[File]] = None,
         reason: Optional[str] = None,
         **kwargs,
@@ -131,13 +131,18 @@ class HTTPClient:
         if reason:
             headers["X-Audit-Log-Reason"] = urlquote(reason, safe="/ ")
 
-        data = self._prepare_data(json_params, files)
+        if isinstance(json_params, dict):
+            data = self._prepare_data(json_params, files)
+            if data.json is not None:
+                kwargs["json"] = data.json
 
-        if data.json is not None:
-            kwargs["json"] = data.json
+            if data.multipart_content is not None:
+                kwargs["data"] = data.multipart_content
+            
+        else:
+            kwargs['json'] = json_params
 
-        if data.multipart_content is not None:
-            kwargs["data"] = data.multipart_content
+
 
         bucket = self.ratelimiter.get_bucket(route.bucket)
 
@@ -205,6 +210,21 @@ class HTTPClient:
 
     async def get_gateway_bot(self):
         return await self.request(Route("GET", "/gateway/bot"))
+
+    async def bulk_set_app_commands(self, commands: List[InteractionCommand]) -> List[InteractionCommand]:
+        returned_commands = []
+
+        me = await self.get_me()
+
+        route = Route("PUT", f"/applications/{me['id']}/commands")
+
+        request = await self.request(route, json_params=[command._to_json() for command in commands])
+
+        for command in request:
+            returned_commands.append(InteractionCommand._from_json(command))
+            
+        return returned_commands
+
 
     async def register_app_commands(self, command: InteractionCommand):
         me = await self.get_me()

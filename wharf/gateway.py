@@ -169,7 +169,7 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
         else:
             self.url = url
 
-        self.ws = await self._http._session.ws_connect(self.url)  # type: ignore
+        self.ws = await self._http._session.ws_connect(self.url)
 
         _log.info(url)
 

@@ -11,11 +11,10 @@ from typing import (
     Coroutine,
     Dict,
     List,
-    Optional,
     TypeVar,
 )
 
-from .impl import Guild, Interaction, Member, Message
+from .impl import Guild, Interaction, Member, Message # type: ignore
 
 if TYPE_CHECKING:
     from .impl.cache import Cache
@@ -56,7 +55,8 @@ class Dispatcher:
         event = self.get_event(event_name)
 
         if event is None:
-            raise ValueError("Event not in any events known :(")
+            _log.info("No event for that!")
+            return
 
         for callback in event:
             asyncio.create_task(callback(*args, **kwargs))

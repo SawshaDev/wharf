@@ -27,7 +27,7 @@ exclude = [
 ]
 reportUnnecessaryTypeIgnoreComment = "warning"
 reportUnusedImport = "error"
-pythonVersion = "3.8"
+pythonVersion = "3.10.8"
 typeCheckingMode = "basic"
 
 [tool.pytest.ini_options]

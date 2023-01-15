@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING, Any, Dict
 
-import discord_typings as dt
 
 if TYPE_CHECKING:
     from ..cache import Cache

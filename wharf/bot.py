@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import importlib
 import logging
-import sys
 from typing import Dict, List, Optional, Protocol, Union, cast
 
 from .activities import Activity
@@ -11,7 +10,7 @@ from .commands import InteractionCommand
 from .dispatcher import CoroFunc, Dispatcher
 from .enums import Status
 from .errors import GatewayReconnect
-from .file import File
+from .file import File # type: ignore
 from .gateway import Gateway
 from .http import HTTPClient
 from .impl import Guild, User, check_channel_type
@@ -34,7 +33,7 @@ class Bot:
     def __init__(self, *, token: str, intents: Intents, cache: Cache = Cache, purge_old_slash: bool = False):  # type: ignore
         self.intents = intents
         self.token = token
-        self._slash_commands = []
+        self._slash_commands: List[InteractionCommand] = []
         self.http = HTTPClient()
         self.cache: Cache = cache(self.http)  # type: ignore
         self.dispatcher = Dispatcher(self.cache)
@@ -66,7 +65,7 @@ class Bot:
         pass
 
     async def login(self):
-        self.http.login(self.token, self.intents.value)  # type: ignore
+        self.http.login(self.token, self.intents.value)
 
         await self.pre_ready()
 
@@ -161,8 +160,8 @@ class Bot:
         return Guild(await self.http.get_guild(guild_id), self.cache)
 
     async def register_app_command(self, command: InteractionCommand):
-        await self.http.register_app_commands(command)
-        self._slash_commands.append(command._to_json())
+        resp = await self.http.register_app_commands(command)
+        self._slash_commands.append(InteractionCommand._from_json(resp))
 
     async def start(self):
         await self.login()
@@ -178,14 +177,11 @@ class Bot:
         if self.purge_slash:
             api_commands = await self.http.get_app_commands()
 
-            for command in api_commands:
-                for cached_command in self._slash_commands:
-                    _log.info(cached_command)
-                    if command["name"] != cached_command["name"]:  # type: ignore
-                        await self.http.delete_app_command(command)
-                        continue
-                    else:
-                        continue
+            commands = await self.http.bulk_set_app_commands([InteractionCommand._from_json(data) for data in api_commands])
+
+            print(api_commands)
+            for command in commands:
+                self._slash_commands.append(command)
 
         for ext in self.extensions:
             ext.remove(self)

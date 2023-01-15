@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from asyncio import gather
 from logging import getLogger
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import discord_typings as dt
 
-from ..impl import DMChannel, Guild, Member, Role, TextChannel, User
+from ..impl import Guild, Member, Role, TextChannel, User
 
 if TYPE_CHECKING:
     from ..http import HTTPClient
@@ -96,7 +95,7 @@ class Cache:
 
         return guild
 
-    def get_channel(self, guild_id: int, channel_id: int) -> Optional[Union[TextChannel, DMChannel]]:
+    def get_channel(self, guild_id: int, channel_id: int) -> Optional[TextChannel]:
         return self.channels[guild_id].get(channel_id)
 
     def add_channel(self, guild_id: int, payload: Dict[str, Any]) -> TextChannel:

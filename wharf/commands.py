@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from .enums import InteractionOptionType
 
@@ -53,9 +53,9 @@ class InteractionCommand:
         return payload
 
     @classmethod
-    def _from_json(cls, payload: Dict[str, Any]):
-        name = payload["data"]["name"]
-        description = payload["data"].get("description", "")
+    def _from_json(cls, payload: Union[Any, Dict[str, Any]]):
+        name = payload["name"]
+        description = payload.get("description", "")
 
         return cls(name=name, description=description)
 

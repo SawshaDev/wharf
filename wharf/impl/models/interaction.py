@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-import discord_typings as dt
-
-from ...enums import InteractionOptionType, MessageFlags
+from ...enums import MessageFlags
 from ...file import File
 
 if TYPE_CHECKING:
@@ -25,7 +23,7 @@ class Interaction:
         self.options: Optional[List[InteractionOption]] = []  # type: ignore
 
         if self.type == 2:
-            self.command = InteractionCommand._from_json(payload)
+            self.command = InteractionCommand._from_json(payload["data"])
             self.options: List[InteractionOption] = []
             self._make_options()
 

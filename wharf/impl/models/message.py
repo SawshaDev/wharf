@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Dict, Optional
 
-import discord_typings as dt
 
 from .guild import Guild
 from .user import User
@@ -12,6 +11,7 @@ if TYPE_CHECKING:
     from .embed import Embed
     from ...file import File
     from .member import Member
+    from .channel import TextChannel
 
 
 class Message:
@@ -23,14 +23,22 @@ class Message:
     def _from_data(self, message: Dict[str, str]):
         self._content = message["content"]
         self._author_id = int(message["author"]["id"])  # type: ignore
-        self._channel_id = message["channel_id"]
+        self._channel_id = int(message["channel_id"])
 
         if message.get("guild_id") is not None:
             self._guild_id = int(message.get("guild_id"))  # type: ignore
 
+        
+
+        print(message)
+
     @property
     def guild(self) -> Optional[Guild]:
         return self.cache.get_guild(self._guild_id)
+
+    @property
+    def channel(self) -> Optional[TextChannel]:
+        return self.cache.get_channel(self._guild_id, self.channel_id)
 
     @property
     def content(self) -> str:
