@@ -72,7 +72,9 @@ class Dispatcher:
         self.dispatch("interaction_create", interaction)
 
     def parse_guild_create(self, data: Dict[str, Any]):
-        guild = self.cache.add_guild(data)
+        asyncio.create_task(self.cache._handle_guild_caching(data))
+
+        guild = self.cache.get_guild(int(data["id"]))
 
         self.dispatch("guild_create", guild)
 

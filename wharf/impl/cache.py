@@ -183,4 +183,4 @@ class Cache:
         self.add_guild(data)
         _log.info("Populating guild %s's cache", data["id"])
         await self.populate_server(int(data["id"]))
-        self.cache_done = True
+
