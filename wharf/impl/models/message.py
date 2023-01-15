@@ -9,6 +9,8 @@ from .user import User
 
 if TYPE_CHECKING:
     from ..cache import Cache
+    from .embed import Embed
+    from ...file import File
 
 
 class Message:
@@ -40,6 +42,6 @@ class Message:
     def channel_id(self) -> int:
         return int(self._channel_id)
 
-    async def send(self, content: str):
-        msg = await self.cache.http.send_message(self.channel_id, content=content)
+    async def send(self, content: str, embed: Embed, file: File):
+        msg = await self.cache.http.send_message(self.channel_id, content=content,embed=embed, file=file)
         return Message(msg, self.cache)
