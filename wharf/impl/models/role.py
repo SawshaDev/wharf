@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING, Any, Dict
 
-
 if TYPE_CHECKING:
     from ..cache import Cache
 

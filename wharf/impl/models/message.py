@@ -2,16 +2,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Dict, Optional
 
-
 from .guild import Guild
 from .user import User
 
 if TYPE_CHECKING:
-    from ..cache import Cache
-    from .embed import Embed
     from ...file import File
-    from .member import Member
+    from ..cache import Cache
     from .channel import TextChannel
+    from .embed import Embed
+    from .member import Member
 
 
 class Message:
@@ -27,8 +26,6 @@ class Message:
 
         if message.get("guild_id") is not None:
             self._guild_id = int(message.get("guild_id"))  # type: ignore
-
-        
 
         print(message)
 

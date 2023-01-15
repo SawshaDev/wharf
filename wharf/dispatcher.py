@@ -4,17 +4,9 @@ import asyncio
 import inspect
 import logging
 from collections import defaultdict
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Coroutine,
-    Dict,
-    List,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, Dict, List, TypeVar
 
-from .impl import Guild, Interaction, Member, Message # type: ignore
+from .impl import Guild, Interaction, Member, Message  # type: ignore
 
 if TYPE_CHECKING:
     from .impl.cache import Cache

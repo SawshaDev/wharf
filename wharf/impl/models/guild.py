@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-
 from ...asset import Asset
 from .channel import TextChannel
 from .member import Member
