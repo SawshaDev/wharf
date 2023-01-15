@@ -1,16 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Coroutine,
-    Dict,
-    List,
-    Optional,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, Dict, List, Optional, TypeVar
 
 if TYPE_CHECKING:
     from .bot import Bot

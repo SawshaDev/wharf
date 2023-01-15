@@ -138,11 +138,9 @@ class HTTPClient:
 
             if data.multipart_content is not None:
                 kwargs["data"] = data.multipart_content
-            
+
         else:
             kwargs['json'] = json_params
-
-
 
         bucket = self.ratelimiter.get_bucket(route.bucket)
 
@@ -222,12 +220,16 @@ class HTTPClient:
 
         for command in request:
             returned_commands.append(InteractionCommand._from_json(command))
-            
-        return returned_commands
 
+        return returned_commands
 
     async def register_app_commands(self, command: InteractionCommand):
         me = await self.get_me()
+
+        if command.guild_id:
+            return await self.request(
+                Route("POST", f"/applications/{me['id']}/guilds/{command.guild_id}/commands"), json_params=command._to_json()
+            )
 
         return await self.request(
             Route("POST", f"/applications/{me['id']}/commands"),

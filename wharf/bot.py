@@ -10,7 +10,7 @@ from .commands import InteractionCommand
 from .dispatcher import CoroFunc, Dispatcher
 from .enums import Status
 from .errors import GatewayReconnect
-from .file import File # type: ignore
+from .file import File  # type: ignore
 from .gateway import Gateway
 from .http import HTTPClient
 from .impl import Guild, User, check_channel_type

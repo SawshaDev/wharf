@@ -14,9 +14,10 @@ class CommandOption:
 
 
 class InteractionCommand:
-    def __init__(self, *, name: str, description: Optional[str] = None):
+    def __init__(self, *, name: str, description: Optional[str] = None, guild_id: Optional[int] = None):
         self.name = name
         self.description = description
+        self.guild_id = guild_id
         self.options = []
 
     def add_options(
