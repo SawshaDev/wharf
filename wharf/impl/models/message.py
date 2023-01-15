@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 
 class Message:
     def __init__(self, data: Dict[str, str], cache: "Cache"):
+        self._data = data
         self._from_data(data)
         self.cache = cache
 
@@ -26,8 +27,6 @@ class Message:
 
         if message.get("guild_id") is not None:
             self._guild_id = int(message.get("guild_id"))  # type: ignore
-
-        print(message)
 
     @property
     def guild(self) -> Optional[Guild]:
