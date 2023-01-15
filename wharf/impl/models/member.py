@@ -29,7 +29,7 @@ class Member:
         self.id = int(payload["user"]["id"])
         self.name = payload["user"]["username"]
         self._avatar = payload["user"].get("avatar")
-        self.permissions = payload["permissions"]
+
 
     @property
     def avatar(self) -> Optional[Asset]:
