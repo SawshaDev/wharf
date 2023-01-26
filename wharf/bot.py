@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import importlib
 import logging
-from typing import Dict, List, Optional, Protocol, Union, cast
+from typing import Dict, List, Optional, Protocol, Union, cast, TypeVar
 
 from .activities import Activity
 from .commands import InteractionCommand
@@ -20,6 +20,8 @@ from .plugin import Plugin
 
 _log = logging.getLogger(__name__)
 
+CacheT = TypeVar("CacheT", bound=Cache)
+
 
 class ExtProtocol(Protocol):
     def load(self, bot: Bot):
@@ -30,7 +32,7 @@ class ExtProtocol(Protocol):
 
 
 class Bot:
-    def __init__(self, *, token: str, intents: Intents, cache: Cache = Cache, purge_old_slash: bool = False):  # type: ignore
+    def __init__(self, *, token: str, intents: Intents, cache: CacheT = Cache, purge_old_slash: bool = False):  # type: ignore
         self.intents = intents
         self.token = token
         self._slash_commands: List[InteractionCommand] = []
@@ -174,15 +176,6 @@ class Bot:
             self.loop.run_until_complete(self.close())
 
     async def close(self):
-        if self.purge_slash:
-            api_commands = await self.http.get_app_commands()
-
-            commands = await self.http.bulk_set_app_commands([InteractionCommand._from_json(data) for data in api_commands])
-
-            print(api_commands)
-            for command in commands:
-                self._slash_commands.append(command)
-
         for ext in self.extensions:
             ext.remove(self)
 

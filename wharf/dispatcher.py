@@ -6,7 +6,7 @@ import logging
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, Dict, List, TypeVar
 
-from .impl import Guild, Interaction, Member, Message  # type: ignore
+from .impl import Guild, Interaction, Member, Message, TextChannel
 
 if TYPE_CHECKING:
     from .impl.cache import Cache
@@ -66,9 +66,40 @@ class Dispatcher:
     def parse_guild_create(self, data: Dict[str, Any]):
         guild = Guild(data, self.cache)
 
+        asyncio.create_task(self.cache._handle_guild_caching(data))
+
+
         self.dispatch("guild_create", guild)
 
     def parse_message_create(self, data: Dict[str, Any]):
         message = Message(data, self.cache)
 
         self.dispatch("message_create", message)
+
+    def parse_guild_member_add(self, data: Dict[str, Any]):
+        self.cache.add_member(int(data["guild_id"]), data)
+
+        member = Member(data, self.cache)
+
+        self.dispatch("member_create", member)
+
+    def parse_guild_delete(self, data: Dict[str, Any]):
+        self.cache.remove_guild(int(data["id"]))
+
+        guild = Guild(data, self.cache)
+
+        self.dispatch("guild_delete", guild)
+
+    def parse_guild_member_remove(self, data: Dict[str, Any]):
+        self.cache.remove_member(int(data["guild_id"]), int(data["user"]["id"]))
+
+        member = Member(data, self.cache)
+
+        self.dispatch("member_remove", member)
+
+    def parse_channel_delete(self, data: Dict[str, Any]):
+        self.cache.remove_channel(int(data["guild_id"]), int(data["id"]))
+        
+        channel = TextChannel(data, self.cache)
+
+        self.dispatch("channel_delete", channel)
