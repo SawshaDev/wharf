@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import importlib
 import logging
-from typing import Dict, List, Optional, Protocol, Union, cast, TypeVar
+from typing import Dict, List, Optional, Protocol, TypeVar, Union, cast
 
 from .activities import Activity
 from .commands import InteractionCommand

@@ -38,7 +38,7 @@ class Cache:
         :class:`User`
             The cached user object
         """
-                
+
         user_data = await self.http.get_user(user_id)
 
         user = User(user_data, self)
@@ -46,9 +46,6 @@ class Cache:
         self.users[user_id] = user
 
         return user
-
-    
-
 
     def remove_guild(self, guild_id: int) -> None:
         guild = self.guilds[guild_id]
@@ -186,7 +183,7 @@ class Cache:
             self.add_role(guild_id, role)
 
         for member in members:
-            self.add_user(member['user']) # type: ignore # Not sure how to fix `"Literal['user']" is incompatible with "slice"` but ill deal with that later 📌
+            self.add_user(member['user'])  # type: ignore # Not sure how to fix `"Literal['user']" is incompatible with "slice"` but ill deal with that later 📌
             self.add_member(guild_id, member)
 
         return guild
