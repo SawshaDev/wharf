@@ -16,6 +16,8 @@ from .impl.cache import Cache
 from .intents import Intents
 from .plugin import Plugin
 
+from .impl.models import check_channel_type, User, Guild
+
 _log = logging.getLogger(__name__) # just here in case it needs to be used!
 
 CacheT = TypeVar("CacheT", bound=Cache)
@@ -81,6 +83,18 @@ class Bot:
                 await self.gateway.connect(gateway_url)
             except GatewayReconnect as gr:
                 gateway_url = gr.url
+
+    async def fetch_user(self, user_id: int):
+        return User(await self.http.get_user(user_id), self.cache)
+
+    async def fetch_channel(self, channel_id: int):
+        resp = await self.http.get_channel(channel_id)
+
+        return check_channel_type(resp, self.cache)
+
+    async def fetch_guild(self, guild_id: int):
+
+        return Guild(await self.http.get_guild(guild_id), self.cache)
 
     def listen(self, name: str):
         def inner(func):
