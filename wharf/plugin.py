@@ -3,6 +3,8 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, Dict, List, Optional, TypeVar
 
+from .errors import BotNotAvailable
+
 if TYPE_CHECKING:
     from .bot import Bot
 
@@ -23,7 +25,7 @@ class Plugin:
     @property
     def bot(self):
         if self._bot is None:
-            raise RuntimeError("Bot cannot be accessed here before its added!")
+            raise BotNotAvailable("Bot cannot be accessed here before its added!")
 
         return self._bot
 

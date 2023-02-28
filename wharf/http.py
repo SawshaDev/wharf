@@ -126,7 +126,7 @@ class HTTPClient:
 
         kwargs = kwargs or {}
 
-        headers: dict[str, str] = self.base_headers
+        headers: Dict[Any, str] = self.base_headers
 
         if reason:
             headers["X-Audit-Log-Reason"] = urlquote(reason, safe="/ ")
@@ -246,6 +246,10 @@ class HTTPClient:
 
         return await self.request(Route("GET", f"/applications/{me['id']}/commands"))
 
+    def add_guild_member_role(self, *, guild_id: int, member_id: int, role_id: int, reason: str):
+        route = Route("PUT", f"/guilds/{guild_id}/members/{member_id}/roles/{role_id}")
+        return self.request(route, reason=reason)
+
     def get_guild_members(self, guild_id: int, limit: int = 1000):
         return self.request(Route("GET", f"/guilds/{guild_id}/members"), query_params={"limit": limit})
 
@@ -297,7 +301,6 @@ class HTTPClient:
         payload = {}
 
         embeds = []
-        _components = []
         files = []
 
         if content:
@@ -400,10 +403,9 @@ class HTTPClient:
 
     def ban(self, guild_id: int, user_id: int, reason: str):
         route = Route("PUT", f"/guilds/{guild_id}/bans/{user_id}")
+        return self.request(route, reason=reason)
+    
 
-        req = self.request(route, reason=reason)
-
-        return req
 
     async def close(self):
         if self._session:

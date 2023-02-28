@@ -27,8 +27,6 @@ class Message:
         if message.get("guild_id") is not None:
             self._guild_id = int(message.get("guild_id"))  # type: ignore
 
-        print(message)
-
     @property
     def guild(self) -> Optional[Guild]:
         return self.cache.get_guild(self._guild_id)

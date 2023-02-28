@@ -3,28 +3,27 @@ from __future__ import annotations
 import asyncio
 import importlib
 import logging
-from typing import Dict, List, Optional, Protocol, Union, cast, TypeVar
+from typing import Dict, List, Optional, Protocol, Union, cast, TypeVar, Callable
 
 from .activities import Activity
 from .commands import InteractionCommand
 from .dispatcher import CoroFunc, Dispatcher
 from .enums import Status
 from .errors import GatewayReconnect
-from .file import File  # type: ignore
 from .gateway import Gateway
 from .http import HTTPClient
-from .impl import Guild, User, check_channel_type
 from .impl.cache import Cache
 from .intents import Intents
 from .plugin import Plugin
 
-_log = logging.getLogger(__name__)
+_log = logging.getLogger(__name__) # just here in case it needs to be used!
 
 CacheT = TypeVar("CacheT", bound=Cache)
+CaCache = Callable[..., CacheT]
 
 
-class ExtProtocol(Protocol):
-    def load(self, bot: Bot):
+class _ExtProtocol(Protocol): # Had to make this private to stop users from accessing it for whatever reason even though its a `Protocol`
+    def load(self, bot: Bot): # Better to make sure than not 🤷
         ...
 
     def remove(self, bot: Bot):
@@ -32,19 +31,19 @@ class ExtProtocol(Protocol):
 
 
 class Bot:
-    def __init__(self, *, token: str, intents: Intents, cache: CacheT = Cache, purge_old_slash: bool = False):  # type: ignore
+    def __init__(self, *, token: str, intents: Intents, cache: CaCache = Cache, purge_old_slash: bool = False):
         self.intents = intents
         self.token = token
         self._slash_commands: List[InteractionCommand] = []
         self.http = HTTPClient()
-        self.cache: Cache = cache(self.http)  # type: ignore
+        self.cache: Cache = cache(self.http)
         self.dispatcher = Dispatcher(self.cache)
         self.purge_slash = purge_old_slash
 
         # ws gets filled in later on
         self.gateway: Gateway = None  # type: ignore
 
-        self.extensions: List[ExtProtocol] = []
+        self.extensions: List[_ExtProtocol] = []
 
         self._plugins: Dict[str, Plugin] = {}
 
@@ -101,7 +100,7 @@ class Bot:
 
         module = importlib.import_module(extension)
 
-        ext = cast(ExtProtocol, module)
+        ext = cast(_ExtProtocol, module)
 
         if hasattr(ext, "load") is False:
             raise RuntimeWarning("Extension is missing load function. Please fix this!")
@@ -116,7 +115,7 @@ class Bot:
 
         module = importlib.import_module(extension)
 
-        ext = cast(ExtProtocol, module)
+        ext = cast(_ExtProtocol, module)
 
         if hasattr(ext, "load") is False:
             raise RuntimeWarning("Extension is missing remove function.")
@@ -148,18 +147,6 @@ class Bot:
 
     async def change_presence(self, *, status: Status, activity: Optional[Activity] = None):
         await self.gateway._change_presence(status=status.value, activity=activity)
-
-    async def fetch_user(self, user_id: int):
-        return User(await self.http.get_user(user_id), self.cache)
-
-    async def fetch_channel(self, channel_id: int):
-        resp = await self.http.get_channel(channel_id)
-
-        return check_channel_type(resp, self.cache)
-
-    async def fetch_guild(self, guild_id: int):
-
-        return Guild(await self.http.get_guild(guild_id), self.cache)
 
     async def register_app_command(self, command: InteractionCommand):
         resp = await self.http.register_app_commands(command)

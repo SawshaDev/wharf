@@ -81,7 +81,7 @@ class Dispatcher:
 
         member = Member(data, self.cache)
 
-        self.dispatch("member_create", member)
+        self.dispatch("guild_member_add", member)
 
     def parse_guild_delete(self, data: Dict[str, Any]):
         self.cache.remove_guild(int(data["id"]))
@@ -95,7 +95,7 @@ class Dispatcher:
 
         member = Member(data, self.cache)
 
-        self.dispatch("member_remove", member)
+        self.dispatch("guild_member_remove", member)
 
     def parse_channel_delete(self, data: Dict[str, Any]):
         self.cache.remove_channel(int(data["guild_id"]), int(data["id"]))
