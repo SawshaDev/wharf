@@ -68,7 +68,6 @@ class Dispatcher:
 
         asyncio.create_task(self.cache._handle_guild_caching(data))
 
-
         self.dispatch("guild_create", guild)
 
     def parse_message_create(self, data: Dict[str, Any]):
@@ -99,7 +98,7 @@ class Dispatcher:
 
     def parse_channel_delete(self, data: Dict[str, Any]):
         self.cache.remove_channel(int(data["guild_id"]), int(data["id"]))
-        
+
         channel = TextChannel(data, self.cache)
 
         self.dispatch("channel_delete", channel)
