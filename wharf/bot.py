@@ -33,17 +33,13 @@ class _ExtProtocol(Protocol): # Had to make this private to stop users from acce
 
 
 class Bot:
-    def __init__(self, *, token: str, intents: Intents, cache: CaCache = Cache, purge_old_slash: bool = False):
+    def __init__(self, *, token: str, intents: Intents, cache: CaCache = Cache):
         self.intents = intents
         self.token = token
         self._slash_commands: List[InteractionCommand] = []
         self.http = HTTPClient()
         self.cache: Cache = cache(self.http)
         self.dispatcher = Dispatcher(self.cache)
-        self.purge_slash = purge_old_slash
-
-        # ws gets filled in later on
-        self.gateway: Gateway = None  # type: ignore
 
         self.extensions: List[_ExtProtocol] = []
 
@@ -159,7 +155,7 @@ class Bot:
 
         self._plugins.pop(plugin.name)  # type: ignore
 
-    async def change_presence(self, *, status: Status, activity: Optional[Activity] = None):
+    async def change_presence(self, *, status: Status = Status.online, activity: Optional[Activity] = None):
         await self.gateway._change_presence(status=status.value, activity=activity)
 
     async def register_app_command(self, command: InteractionCommand):

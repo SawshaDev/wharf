@@ -8,11 +8,11 @@ from .enums import ActivityType
 class Activity:
     __slots__ = ("type", "name", "url")
 
-    def __init__(self, **kwargs: Any):
-        self.name = kwargs.pop("name")
-        self.url: Optional[str] = kwargs.pop("url", None)
+    def __init__(self, name: str, url: Optional[str] = None, type: ActivityType = ActivityType.unknown):
+        self.name = name
+        self.url: Optional[str] = url
 
-        activity_type: ActivityType = kwargs.pop("type", -1)
+        activity_type: ActivityType = type 
         self.type: ActivityType = activity_type
 
     def to_dict(self) -> Dict[str, Any]:
