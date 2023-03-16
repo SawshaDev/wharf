@@ -6,7 +6,7 @@ import logging
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, Dict, List, TypeVar
 
-from .impl import Guild, Interaction, Member, Message, TextChannel
+from .impl import Guild, Interaction, Message, TextChannel
 
 if TYPE_CHECKING:
     from .impl.cache import Cache
@@ -47,7 +47,6 @@ class Dispatcher:
         event = self.get_event(event_name)
 
         if event is None:
-            _log.info("No event for that!")
             return
 
         for callback in event:
@@ -76,9 +75,7 @@ class Dispatcher:
         self.dispatch("message_create", message)
 
     def parse_guild_member_add(self, data: Dict[str, Any]):
-        self.cache.add_member(int(data["guild_id"]), data)
-
-        member = Member(data, self.cache)
+        member = self.cache.add_member(int(data["guild_id"]), data) 
 
         self.dispatch("guild_member_add", member)
 
@@ -90,9 +87,8 @@ class Dispatcher:
         self.dispatch("guild_delete", guild)
 
     def parse_guild_member_remove(self, data: Dict[str, Any]):
-        self.cache.remove_member(int(data["guild_id"]), int(data["user"]["id"]))
+        member = self.cache.remove_member(int(data["guild_id"]), int(data["user"]["id"]))
 
-        member = Member(data, self.cache)
 
         self.dispatch("guild_member_remove", member)
 

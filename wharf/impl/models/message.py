@@ -40,11 +40,14 @@ class Message:
         return self._content
 
     @property
-    def user(self) -> Optional[User]:
+    def user(self) -> User | None:
         return self.cache.get_user(self._author_id)
 
     @property
-    def member(self) -> Optional[Member]:
+    def member(self) -> Member | None:
+        if self._guild_id is None:
+            return None
+        
         return self.cache.get_member(self._guild_id, self._author_id)
 
     @property

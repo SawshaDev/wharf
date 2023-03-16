@@ -348,8 +348,6 @@ class HTTPClient:
         if file:
             files.append(file)
 
-        _log.info(payload)
-
         return self.request(
             Route("POST", f"/channels/{channel}/messages"),
             json_params=payload,

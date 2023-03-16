@@ -7,14 +7,18 @@ from ...asset import Asset
 from .role import Role
 
 if TYPE_CHECKING:
-    from ..cache import Cache
+    from ..cache import Cache   
+    from .guild import Guild
 
 
 class Member:
-    def __init__(self, payload: Dict[str, Any], cache: "Cache"):
+    def __init__(self, payload: Dict[str, Any], guild: Guild, cache: "Cache"):
         self.cache = cache
         self._payload = payload
         self._from_data(payload)
+
+        self.guild: Guild = guild
+
 
         self._roles = []
 

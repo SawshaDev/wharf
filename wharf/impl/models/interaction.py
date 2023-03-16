@@ -14,18 +14,20 @@ if TYPE_CHECKING:
 class Interaction:
     def __init__(self, payload: Dict[str, Any], cache: Cache):
         self.cache = cache
-        self.payload = payload
-        self.id = payload["id"]
-        self.token = payload["token"]
-        self.channel_id = payload["channel_id"]
-        self.type = payload["type"]
+        self._from_data(payload)
+
+    def _from_data(self, payload: Dict[str, Any]) -> None:
+        self.id: int = payload["id"]
+        self.token: str = payload["token"]
+        self.channel_id: int = payload["channel_id"]
+        self.type:str  = payload["type"]
         self.command: Optional[InteractionCommand] = None
-        self.options: Optional[List[InteractionOption]] = []  # type: ignore
+        self.options: List[InteractionOption] = []
 
         if self.type == 2:
             self.command = InteractionCommand._from_json(payload["data"])
-            self.options: List[InteractionOption] = []
-            self._make_options()
+            if payload['data'].get("options"):
+                self.options = self._make_options(payload['data'])
 
         self.guild_id = int(payload.get("guild_id"))  # type: ignore
         self._member = payload.get("member")
@@ -33,7 +35,8 @@ class Interaction:
         if self._member:
             self._user = self._member["user"]
         else:
-            self._user = self.payload["user"]
+            self._user = payload["user"]
+
 
     @property
     def user(self):
@@ -89,8 +92,12 @@ class Interaction:
             components=components,
         )
 
-    def _make_options(self):
-        if self.payload["data"].get("options"):
-            for option in self.payload["data"].get("options"):
-                option = InteractionOption(option)
-                self.options.append(option)
+    def _make_options(self, data: Dict[str, Any]) -> list[InteractionOption]:
+        options: List[InteractionOption] = []
+
+        for option in data["options"]:
+            option = InteractionOption(option)
+            options.append(option)
+
+        return options        
+

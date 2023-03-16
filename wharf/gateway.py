@@ -211,38 +211,10 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
                     if event_name == "RESUMED":
                         _log.info("RESUMED!")
 
-                    # As messy as this all is, this probably is best here.
-                    if event_name == "GUILD_CREATE":
-                        asyncio.create_task(self._cache._handle_guild_caching(event_data))
-
-                    elif event_name == "GUILD_MEMBER_ADD":
-                        self._cache.add_member(
-                            int(event_data["guild_id"]),
-                            event_data,
-                        )
-
-                    elif event_name == "GUILD_DELETE":
-                        self._cache.remove_guild(int(event_data["id"]))
-
-                    elif event_name == "GUILD_MEMBER_REMOVE":
-                        self._cache.remove_member(
-                            int(event_data["guild_id"]),
-                            int(event_data["user"]["id"]),
-                        )
-
-                    elif event_name == "CHANNEL_DELETE":
-                        self._cache.remove_channel(
-                            int(event_data["guild_id"]),
-                            int(event_data["id"]),
-                        )
-
-                    if event_name.lower() not in self._dispatcher.events.keys():
-                        continue
 
                     try:
                         event = self._dispatcher.event_parsers[event_name]
                     except KeyError:
-                        _log.info(event_name.lower())
                         self._dispatcher.dispatch(event_name.lower(), event_data)
                     else:
                         event(event_data)

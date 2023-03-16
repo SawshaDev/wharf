@@ -58,21 +58,24 @@ class Cache:
         self.roles.pop(guild_id)
 
     def remove_channel(self, guild_id: int, channel_id: int) -> Guild:
+        
         guild = self.guilds[guild_id]
 
         guild._remove_channel(channel_id)
         self.channels[guild_id].pop(channel_id)
-
+    
+        _log.info("Removed channel %s from cache", channel_id)
+    
         return guild
 
-    def remove_member(self, guild_id: int, member_id: int) -> Guild:
+    def remove_member(self, guild_id: int, member_id: int) -> Member:
         guild = self.guilds[guild_id]
 
         guild._remove_member(member_id)
-        self.members[guild_id].pop(member_id)
+        mem = self.members[guild_id].pop(member_id)
 
-        return guild
-
+        return mem
+    
     def remove_role(self, guild_id: int, role_id: int):
         if guild_id not in self.roles or role_id not in self.roles.values():
             raise ValueError("Role or Guild does not appear there!")
@@ -129,6 +132,8 @@ class Cache:
 
         self.channels[guild_id][channel.id] = channel
         guild._add_channel(channel)
+        _log.info("added channel %s from cache", channel.id)
+
         return channel
 
     def add_role(self, guild_id: int, payload: Any):
@@ -163,11 +168,12 @@ class Cache:
         if member:
             return member
 
-        member = Member(payload, self)
         guild = self.guilds[guild_id]
+        member = Member(payload, guild, self)
 
         self.members[guild_id][member.id] = member
         guild._add_member(member)
+    
         return member
 
     async def populate_server(self, guild_id: int) -> Guild:
