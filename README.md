@@ -1,5 +1,5 @@
 # Warning
-wharf may or may not be going under a major rewrite. all code will be under a whole new branch (which as 2/26/2023, doenst exist yet but soon will!). 
+wharf may or may not be going under a major rewrite. all code will be under a whole new branch (which as 2/26/2023, doenst exist yet but soon will!).
 <br>
 This current version *does* work but i dont know how well it fares. Wharf currently IS stable but it still needs to go under a rewrite.
 

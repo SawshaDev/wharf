@@ -99,7 +99,6 @@ class Bucket(BurstRatelimiter):
             if self.reset_after is None:
                 self.reset_after = reset_after  # type: ignore
             else:
-
                 self.reset_after = max(self.reset_after, reset_after)  # type: ignore
 
         if self._first_update:

@@ -58,14 +58,13 @@ class Cache:
         self.roles.pop(guild_id)
 
     def remove_channel(self, guild_id: int, channel_id: int) -> Guild:
-        
         guild = self.guilds[guild_id]
 
         guild._remove_channel(channel_id)
         self.channels[guild_id].pop(channel_id)
-    
+
         _log.info("Removed channel %s from cache", channel_id)
-    
+
         return guild
 
     def remove_member(self, guild_id: int, member_id: int) -> Member:
@@ -75,7 +74,7 @@ class Cache:
         mem = self.members[guild_id].pop(member_id)
 
         return mem
-    
+
     def remove_role(self, guild_id: int, role_id: int):
         if guild_id not in self.roles or role_id not in self.roles.values():
             raise ValueError("Role or Guild does not appear there!")
@@ -173,7 +172,7 @@ class Cache:
 
         self.members[guild_id][member.id] = member
         guild._add_member(member)
-    
+
         return member
 
     async def populate_server(self, guild_id: int) -> Guild:

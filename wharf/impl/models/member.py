@@ -3,11 +3,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from ...asset import Asset
-
 from .role import Role
 
 if TYPE_CHECKING:
-    from ..cache import Cache   
+    from ..cache import Cache
     from .guild import Guild
 
 
@@ -18,7 +17,6 @@ class Member:
         self._from_data(payload)
 
         self.guild: Guild = guild
-
 
         self._roles = []
 
@@ -40,6 +38,8 @@ class Member:
         return None
 
     async def add_role(self, guild_id: int, role_id: int, *, reason: str) -> Role:
-        role_payload = await self.cache.http.add_guild_member_role(guild_id=guild_id, member_id=self.id, role_id=role_id, reason=reason)
+        role_payload = await self.cache.http.add_guild_member_role(
+            guild_id=guild_id, member_id=self.id, role_id=role_id, reason=reason
+        )
 
         return Role(role_payload, self.cache)

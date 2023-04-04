@@ -47,7 +47,7 @@ class Message:
     def member(self) -> Member | None:
         if self._guild_id is None:
             return None
-        
+
         return self.cache.get_member(self._guild_id, self._author_id)
 
     @property

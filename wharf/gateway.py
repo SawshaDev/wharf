@@ -211,7 +211,6 @@ class Gateway:  # This Class is in no way supposed to be used by itself. it shou
                     if event_name == "RESUMED":
                         _log.info("RESUMED!")
 
-
                     try:
                         event = self._dispatcher.event_parsers[event_name]
                     except KeyError:
