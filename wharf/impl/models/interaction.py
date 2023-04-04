@@ -20,7 +20,7 @@ class Interaction:
         self.id: int = payload["id"]
         self.token: str = payload["token"]
         self.channel_id: int = payload["channel_id"]
-        self.type:str  = payload["type"]
+        self.type: str = payload["type"]
         self.command: Optional[InteractionCommand] = None
         self.options: List[InteractionOption] = []
 
@@ -36,7 +36,6 @@ class Interaction:
             self._user = self._member["user"]
         else:
             self._user = payload["user"]
-
 
     @property
     def user(self):
@@ -99,5 +98,4 @@ class Interaction:
             option = InteractionOption(option)
             options.append(option)
 
-        return options        
-
+        return options

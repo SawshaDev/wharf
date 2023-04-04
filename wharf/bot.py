@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import importlib
 import logging
-from typing import Dict, List, Optional, Protocol, Union, cast, TypeVar, Callable
+from typing import Callable, Dict, List, Optional, Protocol, TypeVar, Union, cast
 
 from .activities import Activity
 from .commands import InteractionCommand
@@ -13,19 +13,20 @@ from .errors import GatewayReconnect
 from .gateway import Gateway
 from .http import HTTPClient
 from .impl.cache import Cache
+from .impl.models import Guild, User, check_channel_type
 from .intents import Intents
 from .plugin import Plugin
 
-from .impl.models import check_channel_type, User, Guild
-
-_log = logging.getLogger(__name__) # just here in case it needs to be used!
+_log = logging.getLogger(__name__)  # just here in case it needs to be used!
 
 CacheT = TypeVar("CacheT", bound=Cache)
 CaCache = Callable[..., CacheT]
 
 
-class _ExtProtocol(Protocol): # Had to make this private to stop users from accessing it for whatever reason even though its a `Protocol`
-    def load(self, bot: Bot): # Better to make sure than not 🤷
+class _ExtProtocol(
+    Protocol
+):  # Had to make this private to stop users from accessing it for whatever reason even though its a `Protocol`
+    def load(self, bot: Bot):  # Better to make sure than not 🤷
         ...
 
     def remove(self, bot: Bot):
@@ -89,7 +90,6 @@ class Bot:
         return check_channel_type(resp, self.cache)
 
     async def fetch_guild(self, guild_id: int):
-
         return Guild(await self.http.get_guild(guild_id), self.cache)
 
     def listen(self, name: str):

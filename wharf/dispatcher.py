@@ -75,7 +75,7 @@ class Dispatcher:
         self.dispatch("message_create", message)
 
     def parse_guild_member_add(self, data: Dict[str, Any]):
-        member = self.cache.add_member(int(data["guild_id"]), data) 
+        member = self.cache.add_member(int(data["guild_id"]), data)
 
         self.dispatch("guild_member_add", member)
 
@@ -88,7 +88,6 @@ class Dispatcher:
 
     def parse_guild_member_remove(self, data: Dict[str, Any]):
         member = self.cache.remove_member(int(data["guild_id"]), int(data["user"]["id"]))
-
 
         self.dispatch("guild_member_remove", member)
 

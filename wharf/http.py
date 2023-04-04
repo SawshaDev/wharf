@@ -402,8 +402,6 @@ class HTTPClient:
     def ban(self, guild_id: int, user_id: int, reason: str):
         route = Route("PUT", f"/guilds/{guild_id}/bans/{user_id}")
         return self.request(route, reason=reason)
-    
-
 
     async def close(self):
         if self._session:

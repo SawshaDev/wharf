@@ -7,6 +7,7 @@ from aiohttp import ClientResponse
 class BaseException(Exception):
     pass
 
+
 class BotNotAvailable(BaseException):
     pass
 
@@ -61,6 +62,7 @@ class HTTPException(BaseException):
             fmt += ": {2}"
 
         super().__init__(fmt.format(self.response, self.code, self.text))
+
 
 class BucketMigrated(BaseException):
     """Represents an internal exception for when a bucket migrates."""

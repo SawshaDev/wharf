@@ -12,7 +12,7 @@ class Activity:
         self.name = name
         self.url: Optional[str] = url
 
-        activity_type: ActivityType = type 
+        activity_type: ActivityType = type
         self.type: ActivityType = activity_type
 
     def to_dict(self) -> Dict[str, Any]:
