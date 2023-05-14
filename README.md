@@ -1,7 +1,9 @@
-# Warning
-wharf may or may not be going under a major rewrite. all code will be under a whole new branch (which as 2/26/2023, doenst exist yet but soon will!). 
+# Deprecation Notice
+Wharf is now deprecated. I no longer will be working on this library and it might be going fully out of date soon because of the pomelo (username changes)  updates with discord.
 <br>
-This current version *does* work but i dont know how well it fares. Wharf currently IS stable but it still needs to go under a rewrite.
+As of 5/13/2023, this library does still work as to my knowledge but i'd say use another api wrapper such a ``Hikari`` or ``Discord.py``.
+<br>
+You may create a fork of this if you want just as people did with discord.py when it was deprecated back in 2021.
 
 # Wharf
 
